@@ -1,0 +1,29 @@
+{
+  "full_name": "Pria Nandhini M A",
+  "primary_email": "candidate@example.com",
+  "phone": "+911234567890",
+  "skills": [
+    "Python",
+    "Machine Learning",
+    "FastAPI",
+    "Docker",
+    "React",
+    "AWS",
+    "PostgreSQL",
+    "Node.js",
+    "JavaScript",
+    "TypeScript",
+    "Jupyter Notebook",
+    "Html",
+    "Java"
+  ],
+  "github": "https://github.com/Prinan-99",
+  "headline": "AI Engineer | Data Scientist | Full-Stack Developer at Freelance",
+  "location": {
+    "city": "Chennai",
+    "region": "TN",
+    "country": "IN"
+  },
+  "years_experience": 3.4,
+  "overall_confidence": 0.856
+}

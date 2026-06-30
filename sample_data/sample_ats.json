@@ -1,0 +1,28 @@
+{
+  "candidate_name": "Pria Nandhini M A",
+  "email_address": "candidate@example.com",
+  "phone_number": "+911234567890",
+  "current_title": "AI Engineer",
+  "current_company": "Freelance",
+  "location": "Chennai, India",
+  "linkedin_url": "https://linkedin.com/in/pria-nandhini",
+  "github_url": "https://github.com/Prinan-99",
+  "skill_tags": ["Python", "Machine Learning", "FastAPI", "React", "Docker", "AWS"],
+  "work_history": [
+    {
+      "company": "Freelance",
+      "title": "AI Engineer",
+      "start_date": "2023-01",
+      "end_date": null,
+      "description": "Building AI-powered applications and data pipelines."
+    }
+  ],
+  "education_history": [
+    {
+      "school": "Rathinam Technical Campus",
+      "degree": "B.E",
+      "field": "Computer Science Engineering",
+      "end_year": 2025
+    }
+  ]
+}

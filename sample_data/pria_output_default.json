@@ -1,0 +1,360 @@
+{
+  "candidate_id": "cand_0cbf0ffec898",
+  "full_name": "Pria Nandhini M A",
+  "emails": [
+    "candidate@example.com"
+  ],
+  "phones": [
+    "+911234567890"
+  ],
+  "location": {
+    "city": "Chennai",
+    "region": "TN",
+    "country": "IN"
+  },
+  "links": {
+    "linkedin": "https://linkedin.com/in/pria-nandhini",
+    "github": "https://github.com/Prinan-99",
+    "portfolio": "prianandhini.tech",
+    "other": []
+  },
+  "headline": "AI Engineer | Data Scientist | Full-Stack Developer at Freelance",
+  "years_experience": 3.4,
+  "skills": [
+    {
+      "name": "Python",
+      "confidence": 0.995,
+      "sources": [
+        "recruiter_csv",
+        "ats_json",
+        "github_api"
+      ]
+    },
+    {
+      "name": "Machine Learning",
+      "confidence": 0.97,
+      "sources": [
+        "recruiter_csv",
+        "ats_json"
+      ]
+    },
+    {
+      "name": "FastAPI",
+      "confidence": 0.97,
+      "sources": [
+        "recruiter_csv",
+        "ats_json"
+      ]
+    },
+    {
+      "name": "Docker",
+      "confidence": 0.97,
+      "sources": [
+        "recruiter_csv",
+        "ats_json"
+      ]
+    },
+    {
+      "name": "React",
+      "confidence": 0.97,
+      "sources": [
+        "recruiter_csv",
+        "ats_json"
+      ]
+    },
+    {
+      "name": "AWS",
+      "confidence": 0.97,
+      "sources": [
+        "recruiter_csv",
+        "ats_json"
+      ]
+    },
+    {
+      "name": "PostgreSQL",
+      "confidence": 0.85,
+      "sources": [
+        "recruiter_csv"
+      ]
+    },
+    {
+      "name": "Node.js",
+      "confidence": 0.85,
+      "sources": [
+        "recruiter_csv"
+      ]
+    },
+    {
+      "name": "JavaScript",
+      "confidence": 0.84,
+      "sources": [
+        "github_api"
+      ]
+    },
+    {
+      "name": "TypeScript",
+      "confidence": 0.83,
+      "sources": [
+        "github_api"
+      ]
+    },
+    {
+      "name": "Jupyter Notebook",
+      "confidence": 0.83,
+      "sources": [
+        "github_api"
+      ]
+    },
+    {
+      "name": "Html",
+      "confidence": 0.82,
+      "sources": [
+        "github_api"
+      ]
+    },
+    {
+      "name": "Java",
+      "confidence": 0.81,
+      "sources": [
+        "github_api"
+      ]
+    }
+  ],
+  "experience": [
+    {
+      "company": "Freelance",
+      "title": "AI Engineer",
+      "start": "2023-01",
+      "end": "present",
+      "summary": "Building AI-powered applications and data pipelines."
+    },
+    {
+      "company": "Freelance",
+      "title": "AI Engineer | Data Scientist | Full-Stack Developer",
+      "start": null,
+      "end": null,
+      "summary": null
+    }
+  ],
+  "education": [
+    {
+      "institution": "Rathinam Technical Campus",
+      "degree": "B.E",
+      "field": "Computer Science Engineering",
+      "end_year": 2025
+    }
+  ],
+  "provenance": [
+    {
+      "field": "full_name",
+      "source": "github_api",
+      "method": "api",
+      "confidence": 0.9
+    },
+    {
+      "field": "emails",
+      "source": "recruiter_csv",
+      "method": "direct",
+      "confidence": 0.85
+    },
+    {
+      "field": "phones",
+      "source": "recruiter_csv",
+      "method": "direct",
+      "confidence": 0.85
+    },
+    {
+      "field": "phones",
+      "source": "recruiter_notes",
+      "method": "regex",
+      "confidence": 0.6
+    },
+    {
+      "field": "phones",
+      "source": "ats_json",
+      "method": "direct",
+      "confidence": 0.8
+    },
+    {
+      "field": "location",
+      "source": "recruiter_csv",
+      "method": "parsed",
+      "confidence": 0.85
+    },
+    {
+      "field": "links",
+      "source": "recruiter_csv",
+      "method": "direct",
+      "confidence": 0.85
+    },
+    {
+      "field": "links",
+      "source": "recruiter_notes",
+      "method": "regex_url",
+      "confidence": 0.6
+    },
+    {
+      "field": "links",
+      "source": "ats_json",
+      "method": "direct",
+      "confidence": 0.8
+    },
+    {
+      "field": "links",
+      "source": "github_api",
+      "method": "api",
+      "confidence": 0.95
+    },
+    {
+      "field": "headline",
+      "source": "recruiter_csv",
+      "method": "direct",
+      "confidence": 0.85
+    },
+    {
+      "field": "skills",
+      "source": "recruiter_csv",
+      "method": "direct",
+      "confidence": 0.85
+    },
+    {
+      "field": "skills",
+      "source": "ats_json",
+      "method": "direct",
+      "confidence": 0.8
+    },
+    {
+      "field": "skills",
+      "source": "github_api",
+      "method": "inferred_from_repos",
+      "confidence": 0.8173076923076924
+    },
+    {
+      "field": "skills",
+      "source": "recruiter_csv",
+      "method": "direct",
+      "confidence": 0.85
+    },
+    {
+      "field": "skills",
+      "source": "ats_json",
+      "method": "direct",
+      "confidence": 0.8
+    },
+    {
+      "field": "skills",
+      "source": "recruiter_csv",
+      "method": "direct",
+      "confidence": 0.85
+    },
+    {
+      "field": "skills",
+      "source": "ats_json",
+      "method": "direct",
+      "confidence": 0.8
+    },
+    {
+      "field": "skills",
+      "source": "recruiter_csv",
+      "method": "direct",
+      "confidence": 0.85
+    },
+    {
+      "field": "skills",
+      "source": "recruiter_csv",
+      "method": "direct",
+      "confidence": 0.85
+    },
+    {
+      "field": "skills",
+      "source": "ats_json",
+      "method": "direct",
+      "confidence": 0.8
+    },
+    {
+      "field": "skills",
+      "source": "recruiter_csv",
+      "method": "direct",
+      "confidence": 0.85
+    },
+    {
+      "field": "skills",
+      "source": "ats_json",
+      "method": "direct",
+      "confidence": 0.8
+    },
+    {
+      "field": "skills",
+      "source": "recruiter_csv",
+      "method": "direct",
+      "confidence": 0.85
+    },
+    {
+      "field": "skills",
+      "source": "recruiter_csv",
+      "method": "direct",
+      "confidence": 0.85
+    },
+    {
+      "field": "skills",
+      "source": "ats_json",
+      "method": "direct",
+      "confidence": 0.8
+    },
+    {
+      "field": "skills",
+      "source": "github_api",
+      "method": "inferred_from_repos",
+      "confidence": 0.8403846153846154
+    },
+    {
+      "field": "skills",
+      "source": "github_api",
+      "method": "inferred_from_repos",
+      "confidence": 0.8288461538461539
+    },
+    {
+      "field": "skills",
+      "source": "github_api",
+      "method": "inferred_from_repos",
+      "confidence": 0.8288461538461539
+    },
+    {
+      "field": "skills",
+      "source": "github_api",
+      "method": "inferred_from_repos",
+      "confidence": 0.8173076923076924
+    },
+    {
+      "field": "skills",
+      "source": "github_api",
+      "method": "inferred_from_repos",
+      "confidence": 0.8115384615384615
+    },
+    {
+      "field": "experience",
+      "source": "recruiter_csv",
+      "method": "direct",
+      "confidence": 0.8
+    },
+    {
+      "field": "experience",
+      "source": "ats_json",
+      "method": "direct",
+      "confidence": 0.8
+    },
+    {
+      "field": "education",
+      "source": "ats_json",
+      "method": "direct",
+      "confidence": 0.8
+    },
+    {
+      "field": "years_experience",
+      "source": "computed",
+      "method": "summed_from_experience",
+      "confidence": 0.7
+    }
+  ],
+  "overall_confidence": 0.856
+}

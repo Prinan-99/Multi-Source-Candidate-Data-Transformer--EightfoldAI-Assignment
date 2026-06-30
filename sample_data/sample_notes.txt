@@ -1,0 +1,9 @@
+Candidate: Pria Nandhini M A
+Email: candidate@example.com
+Phone: +91 12345 67890
+LinkedIn: linkedin.com/in/pria-nandhini
+GitHub: github.com/Prinan-99
+Location: Chennai, India
+
+Notes: Strong AI/ML candidate. Currently freelancing on AI products.
+Good communication skills. Follow up by end of week.

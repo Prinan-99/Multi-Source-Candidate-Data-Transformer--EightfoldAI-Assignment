@@ -1,0 +1,25 @@
+# Python
+__pycache__/
+*.pyc
+*.pyo
+.pytest_cache/
+
+# Personal / private data — never push real resumes or personal CSVs
+*.pdf
+*.docx
+pria_recruiter.csv
+pria_notes.txt
+pria_ats.json
+
+# Runtime artifacts
+candidate.json
+*.log
+
+# Internal test artifacts
+sample_data/conflict_test_cases.json
+sample_data/merge_ground_truth.json
+sample_data/resume_samples/
+
+# Environment
+.env
+.env.*

@@ -1,0 +1,16 @@
+{
+  "_comment": "Custom output config — demonstrates field selection, renaming, and normalisation",
+  "fields": [
+    { "path": "full_name",      "type": "string",   "required": true  },
+    { "path": "primary_email",  "from": "emails[0]","type": "string",  "required": true  },
+    { "path": "phone",          "from": "phones[0]","type": "string",  "normalize": "E164" },
+    { "path": "skills",         "from": "skills[].name", "type": "string[]", "normalize": "canonical" },
+    { "path": "github",         "from": "links.github",  "type": "string"  },
+    { "path": "headline",       "type": "string"  },
+    { "path": "location",       "type": "object"  },
+    { "path": "years_experience","type": "number" }
+  ],
+  "include_confidence": true,
+  "include_provenance": false,
+  "on_missing": "null"
+}
