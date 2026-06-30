@@ -17,28 +17,32 @@
       flex-direction: column;
     }
 
-    /* header */
     header {
       background: #fff;
       border-bottom: 1px solid #ddd;
       padding: 12px 20px;
       display: flex;
       align-items: center;
-      gap: 12px;
+      justify-content: space-between;
       flex-shrink: 0;
     }
     header h1 { font-size: 14px; font-weight: 600; }
     header span { font-size: 12px; color: #888; }
+    #mode-badge {
+      font-size: 11px; padding: 3px 10px;
+      border-radius: 20px; font-weight: 500; display: none;
+    }
+    #mode-badge.single { background: #eff6ff; color: #1d4ed8; border: 1px solid #bfdbfe; }
+    #mode-badge.batch  { background: #f0fdf4; color: #15803d; border: 1px solid #bbf7d0; }
 
-    /* layout */
     .workspace {
       display: grid;
-      grid-template-columns: 340px 1fr;
+      grid-template-columns: 320px 1fr;
       flex: 1;
       overflow: hidden;
     }
 
-    /* left */
+    /* ── LEFT PANEL ── */
     .left {
       background: #fff;
       border-right: 1px solid #ddd;
@@ -46,42 +50,30 @@
       padding: 16px;
       display: flex;
       flex-direction: column;
-      gap: 12px;
+      gap: 10px;
     }
 
     .section-label {
-      font-size: 11px;
-      font-weight: 600;
-      text-transform: uppercase;
-      letter-spacing: 0.6px;
-      color: #888;
-      margin-bottom: 6px;
+      font-size: 11px; font-weight: 600;
+      text-transform: uppercase; letter-spacing: 0.6px;
+      color: #888; margin-bottom: 2px;
     }
 
-    /* source block */
     .source {
       border: 1px solid #e0e0e0;
-      border-radius: 6px;
-      overflow: hidden;
+      border-radius: 6px; overflow: hidden;
     }
     .source-toggle {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      padding: 9px 12px;
-      cursor: pointer;
-      background: #fafafa;
-      user-select: none;
+      display: flex; justify-content: space-between; align-items: center;
+      padding: 8px 11px; cursor: pointer;
+      background: #fafafa; user-select: none;
     }
     .source-toggle:hover { background: #f0f0f0; }
     .source-left { display: flex; align-items: center; gap: 8px; }
     .source-name { font-weight: 500; font-size: 13px; }
     .conf-tag {
-      font-size: 10px;
-      color: #888;
-      background: #ececec;
-      padding: 1px 6px;
-      border-radius: 3px;
+      font-size: 10px; color: #888;
+      background: #ececec; padding: 1px 6px; border-radius: 3px;
     }
     .source-dot {
       width: 7px; height: 7px; border-radius: 50%;
@@ -92,37 +84,25 @@
     .chevron.open { transform: rotate(180deg); }
 
     .source-body {
-      padding: 10px 12px;
+      padding: 10px 11px;
       border-top: 1px solid #e0e0e0;
-      display: none;
-      flex-direction: column;
-      gap: 8px;
+      display: none; flex-direction: column; gap: 8px;
     }
     .source-body.open { display: flex; }
 
-    /* inputs */
     label { font-size: 11px; color: #666; display: block; margin-bottom: 3px; }
 
     input[type=text] {
-      width: 100%;
-      padding: 7px 10px;
-      border: 1px solid #d0d0d0;
-      border-radius: 5px;
-      font-size: 13px;
-      font-family: inherit;
-      outline: none;
-      background: #fff;
+      width: 100%; padding: 6px 9px;
+      border: 1px solid #d0d0d0; border-radius: 5px;
+      font-size: 13px; font-family: inherit; outline: none; background: #fff;
     }
     input[type=text]:focus { border-color: #2563eb; }
 
     .file-input-wrap {
-      border: 1px dashed #ccc;
-      border-radius: 5px;
-      padding: 10px;
-      text-align: center;
-      cursor: pointer;
-      position: relative;
-      transition: border-color .15s;
+      border: 1px dashed #ccc; border-radius: 5px;
+      padding: 10px; text-align: center;
+      cursor: pointer; position: relative; transition: border-color .15s;
     }
     .file-input-wrap:hover { border-color: #2563eb; }
     .file-input-wrap input[type=file] {
@@ -133,15 +113,22 @@
     .file-hint b { color: #2563eb; font-weight: 500; }
     .file-name { font-size: 11px; color: #16a34a; margin-top: 3px; display: none; }
 
+    /* batch detection badge inside left panel */
+    #batch-detect {
+      display: none; padding: 7px 10px; border-radius: 5px;
+      background: #f0fdf4; border: 1px solid #bbf7d0;
+      color: #15803d; font-size: 12px;
+    }
+    #batch-detect strong { font-weight: 600; }
+
     textarea {
-      width: 100%; padding: 7px 10px;
+      width: 100%; padding: 7px 9px;
       border: 1px solid #d0d0d0; border-radius: 5px;
       font-size: 12px; font-family: monospace; resize: vertical;
       min-height: 64px; outline: none; background: #fff;
     }
     textarea:focus { border-color: #2563eb; }
 
-    /* config toggle */
     .tab-row { display: flex; gap: 0; border: 1px solid #d0d0d0; border-radius: 5px; overflow: hidden; }
     .tab-btn {
       flex: 1; padding: 6px 10px; border: none; background: #fafafa;
@@ -150,9 +137,8 @@
     .tab-btn:first-child { border-right: 1px solid #d0d0d0; }
     .tab-btn.active { background: #2563eb; color: #fff; font-weight: 500; }
 
-    /* submit */
     #submit-btn {
-      width: 100%; padding: 10px;
+      width: 100%; padding: 9px;
       background: #1a1a1a; color: #fff;
       border: none; border-radius: 5px;
       font-size: 13px; font-weight: 500;
@@ -175,13 +161,11 @@
       font-size: 12px; color: #b91c1c; display: none;
     }
 
-    /* right */
+    /* ── RIGHT PANEL ── */
     .right {
-      overflow-y: auto;
-      padding: 20px;
+      overflow: hidden;
       display: flex;
       flex-direction: column;
-      gap: 14px;
     }
 
     /* empty state */
@@ -193,30 +177,99 @@
     .empty p:first-child { font-size: 28px; }
     .empty p { font-size: 13px; }
 
-    /* result */
-    #result { display: none; flex-direction: column; gap: 14px; }
+    /* ── SINGLE RESULT ── */
+    #single-view {
+      display: none;
+      overflow-y: auto;
+      padding: 20px;
+      flex-direction: column;
+      gap: 14px;
+      flex: 1;
+      min-height: 0;
+    }
 
-    /* candidate name block */
+    /* ── BATCH VIEW ── */
+    #batch-view {
+      display: none;
+      flex: 1;
+      overflow: hidden;
+      flex-direction: column;
+    }
+
+    #batch-header {
+      padding: 10px 16px;
+      border-bottom: 1px solid #e0e0e0;
+      background: #fff;
+      font-size: 12px; color: #555;
+      display: flex; align-items: center; gap: 10px; flex-shrink: 0;
+    }
+    #batch-header strong { font-weight: 600; color: #1a1a1a; }
+    .avg-conf { font-family: monospace; }
+
+    #batch-body {
+      display: grid;
+      grid-template-columns: 240px 1fr;
+      flex: 1;
+      overflow: hidden;
+    }
+
+    /* Candidate list */
+    #batch-list {
+      border-right: 1px solid #e0e0e0;
+      overflow-y: auto;
+      background: #fafafa;
+    }
+    .cand-card {
+      padding: 11px 14px;
+      border-bottom: 1px solid #eee;
+      cursor: pointer;
+      transition: background .1s;
+    }
+    .cand-card:hover { background: #f0f0f0; }
+    .cand-card.active { background: #eff6ff; border-left: 3px solid #2563eb; }
+    .cand-card .cn { font-weight: 500; font-size: 13px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .cand-card .cm { font-size: 11px; color: #888; margin-top: 3px; display: flex; gap: 8px; }
+    .cand-card .cm .err-tag { color: #b91c1c; }
+    .cconf { font-family: monospace; }
+    .cconf.hi { color: #16a34a; }
+    .cconf.md { color: #2563eb; }
+    .cconf.lo { color: #d97706; }
+
+    /* Detail inside batch */
+    #batch-detail {
+      overflow-y: auto;
+      padding: 20px;
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+      min-height: 0;
+    }
+    #batch-detail .empty {
+      height: 100%;
+    }
+
+    /* ── SHARED RESULT CARD STYLES ── */
     .name-block {
       background: #fff; border: 1px solid #e0e0e0;
       border-radius: 6px; padding: 16px;
       display: flex; justify-content: space-between; align-items: flex-start;
+      flex-shrink: 0;
     }
     .cname { font-size: 20px; font-weight: 600; margin-bottom: 3px; }
     .cheadline { font-size: 13px; color: #666; }
     .cmeta { margin-top: 8px; display: flex; gap: 14px; flex-wrap: wrap; }
     .cmeta span { font-size: 12px; color: #555; }
-    .conf-num { text-align: right; }
+    .conf-num { text-align: right; flex-shrink: 0; }
     .conf-num .label { font-size: 10px; color: #888; text-transform: uppercase; letter-spacing: 0.5px; }
     .conf-num .value { font-size: 26px; font-weight: 700; font-family: monospace; }
     .conf-high { color: #16a34a; }
     .conf-med  { color: #2563eb; }
     .conf-low  { color: #d97706; }
 
-    /* card */
     .card {
       background: #fff; border: 1px solid #e0e0e0;
       border-radius: 6px; overflow: hidden;
+      flex-shrink: 0;
     }
     .card-head {
       padding: 8px 14px; border-bottom: 1px solid #e0e0e0;
@@ -225,7 +278,6 @@
     }
     .card-body { padding: 12px 14px; }
 
-    /* sources used */
     .tag-row { display: flex; flex-wrap: wrap; gap: 6px; }
     .tag {
       font-size: 11px; padding: 2px 8px; border-radius: 3px;
@@ -233,27 +285,22 @@
       font-family: monospace;
     }
 
-    /* contact */
     .contact-list { display: flex; flex-wrap: wrap; gap: 6px; }
     .contact-item {
       font-family: monospace; font-size: 12px;
       background: #f4f4f4; padding: 4px 10px; border-radius: 4px;
     }
 
-    /* skills */
     .skills-wrap { display: flex; flex-wrap: wrap; gap: 6px; }
     .skill {
       font-size: 12px; padding: 3px 10px; border-radius: 3px;
       background: #f4f4f4; border: 1px solid #e0e0e0;
       display: flex; align-items: center; gap: 5px;
     }
-    .skill .sconf {
-      font-family: monospace; font-size: 10px; color: #888;
-    }
+    .skill .sconf { font-family: monospace; font-size: 10px; color: #888; }
     .skill.hi { border-color: #bbf7d0; background: #f0fdf4; }
     .skill.lo { border-color: #fde68a; background: #fffbeb; }
 
-    /* timeline */
     .tl-item { display: flex; gap: 10px; margin-bottom: 10px; }
     .tl-item:last-child { margin-bottom: 0; }
     .tl-line { display: flex; flex-direction: column; align-items: center; }
@@ -268,7 +315,6 @@
     .tl-sub { font-size: 12px; color: #666; margin-top: 1px; }
     .tl-date { font-size: 11px; color: #2563eb; font-family: monospace; margin-top: 2px; }
 
-    /* provenance table */
     .prov-table { width: 100%; border-collapse: collapse; font-size: 12px; }
     .prov-table th {
       text-align: left; padding: 6px 10px;
@@ -284,14 +330,13 @@
     }
     .prov-conf { font-family: monospace; }
 
-    /* raw json */
     .json-toggle {
       display: flex; justify-content: space-between; align-items: center;
       padding: 8px 14px; cursor: pointer; user-select: none;
     }
     .json-toggle:hover { background: #fafafa; }
-    #raw-json { display: none; border-top: 1px solid #e0e0e0; padding: 12px 14px; }
-    #raw-json pre {
+    .raw-json-body { display: none; border-top: 1px solid #e0e0e0; padding: 12px 14px; }
+    .raw-json-body pre {
       font-family: monospace; font-size: 11px;
       white-space: pre-wrap; word-break: break-word;
       max-height: 360px; overflow-y: auto; color: #333;
@@ -310,19 +355,22 @@
 <body>
 
 <header>
-  <h1>Candidate Data Transformer</h1>
-  <span>Multi-source canonicalization — Eightfold Assignment</span>
+  <div style="display:flex;align-items:center;gap:12px">
+    <h1>Candidate Data Transformer</h1>
+    <span>Multi-source canonicalization — Eightfold Assignment</span>
+  </div>
+  <span id="mode-badge"></span>
 </header>
 
 <div class="workspace">
 
-  <!-- LEFT: sources form -->
+  <!-- ── LEFT: sources form ── -->
   <div class="left">
     <div class="section-label">Input Sources</div>
 
     <!-- CSV -->
     <div class="source">
-      <div class="source-toggle" onclick="toggle(this, 'b-csv')">
+      <div class="source-toggle" onclick="toggle(this,'b-csv')">
         <div class="source-left">
           <div class="source-dot" id="dot-csv"></div>
           <span class="source-name">Recruiter CSV</span>
@@ -331,17 +379,19 @@
         <span class="chevron">&#x25BE;</span>
       </div>
       <div class="source-body open" id="b-csv">
-        <div class="file-input-wrap" onclick="">
-          <input type="file" id="csv_file" accept=".csv" onchange="picked('csv_file','dot-csv','fn-csv')" />
+        <div class="file-input-wrap">
+          <input type="file" id="csv_file" accept=".csv"
+                 onchange="onCsvPicked()" />
           <div class="file-hint">Drop CSV or <b>browse</b></div>
           <div class="file-name" id="fn-csv"></div>
         </div>
+        <div id="batch-detect"></div>
       </div>
     </div>
 
     <!-- ATS -->
     <div class="source">
-      <div class="source-toggle" onclick="toggle(this, 'b-ats')">
+      <div class="source-toggle" onclick="toggle(this,'b-ats')">
         <div class="source-left">
           <div class="source-dot" id="dot-ats"></div>
           <span class="source-name">ATS JSON</span>
@@ -351,7 +401,8 @@
       </div>
       <div class="source-body" id="b-ats">
         <div class="file-input-wrap">
-          <input type="file" id="ats_file" accept=".json" onchange="picked('ats_file','dot-ats','fn-ats')" />
+          <input type="file" id="ats_file" accept=".json"
+                 onchange="picked('ats_file','dot-ats','fn-ats')" />
           <div class="file-hint">Drop JSON or <b>browse</b></div>
           <div class="file-name" id="fn-ats"></div>
         </div>
@@ -360,7 +411,7 @@
 
     <!-- GitHub -->
     <div class="source">
-      <div class="source-toggle" onclick="toggle(this, 'b-gh')">
+      <div class="source-toggle" onclick="toggle(this,'b-gh')">
         <div class="source-left">
           <div class="source-dot" id="dot-gh"></div>
           <span class="source-name">GitHub</span>
@@ -377,7 +428,7 @@
 
     <!-- LinkedIn -->
     <div class="source">
-      <div class="source-toggle" onclick="toggle(this, 'b-li')">
+      <div class="source-toggle" onclick="toggle(this,'b-li')">
         <div class="source-left">
           <div class="source-dot" id="dot-li"></div>
           <span class="source-name">LinkedIn</span>
@@ -394,7 +445,7 @@
 
     <!-- Resume -->
     <div class="source">
-      <div class="source-toggle" onclick="toggle(this, 'b-res')">
+      <div class="source-toggle" onclick="toggle(this,'b-res')">
         <div class="source-left">
           <div class="source-dot" id="dot-res"></div>
           <span class="source-name">Resume PDF</span>
@@ -404,7 +455,8 @@
       </div>
       <div class="source-body" id="b-res">
         <div class="file-input-wrap">
-          <input type="file" id="resume_file" accept=".pdf" onchange="picked('resume_file','dot-res','fn-res')" />
+          <input type="file" id="resume_file" accept=".pdf"
+                 onchange="picked('resume_file','dot-res','fn-res')" />
           <div class="file-hint">Drop PDF or <b>browse</b></div>
           <div class="file-name" id="fn-res"></div>
         </div>
@@ -413,7 +465,7 @@
 
     <!-- Notes -->
     <div class="source">
-      <div class="source-toggle" onclick="toggle(this, 'b-notes')">
+      <div class="source-toggle" onclick="toggle(this,'b-notes')">
         <div class="source-left">
           <div class="source-dot" id="dot-notes"></div>
           <span class="source-name">Recruiter Notes</span>
@@ -423,7 +475,8 @@
       </div>
       <div class="source-body" id="b-notes">
         <div class="file-input-wrap">
-          <input type="file" id="notes_file" accept=".txt" onchange="picked('notes_file','dot-notes','fn-notes')" />
+          <input type="file" id="notes_file" accept=".txt"
+                 onchange="picked('notes_file','dot-notes','fn-notes')" />
           <div class="file-hint">Drop .txt or <b>browse</b></div>
           <div class="file-name" id="fn-notes"></div>
         </div>
@@ -440,9 +493,10 @@
         <button class="tab-btn active" id="tab-default" onclick="setCfg('default')">Default</button>
         <button class="tab-btn" id="tab-custom" onclick="setCfg('custom')">Custom</button>
       </div>
-      <div id="cfg-area" style="display:none;margin-top:8px;display:none;flex-direction:column;gap:8px">
+      <div id="cfg-area" style="display:none;margin-top:8px;flex-direction:column;gap:8px">
         <div class="file-input-wrap">
-          <input type="file" id="config_file" accept=".json" onchange="picked('config_file',null,'fn-cfg')" />
+          <input type="file" id="config_file" accept=".json"
+                 onchange="picked('config_file',null,'fn-cfg')" />
           <div class="file-hint">Drop config JSON or <b>browse</b></div>
           <div class="file-name" id="fn-cfg"></div>
         </div>
@@ -454,120 +508,51 @@
 
     <div class="error-msg" id="err"></div>
 
-    <button id="submit-btn" onclick="run()">
+    <button id="submit-btn" onclick="runPipeline()">
       <div class="spinner" id="spin"></div>
       <span id="btn-label">Run pipeline</span>
     </button>
   </div>
 
-  <!-- RIGHT: output -->
+  <!-- ── RIGHT: output ── -->
   <div class="right">
 
-    <div class="empty" id="empty">
+    <!-- Empty state -->
+    <div class="empty" id="empty-state">
       <p>&#x25B7;</p>
       <p>Add at least one source and run the pipeline.</p>
     </div>
 
-    <div id="result">
-
-      <!-- Name / headline / confidence -->
-      <div class="name-block">
-        <div>
-          <div class="cname" id="r-name"></div>
-          <div class="cheadline" id="r-headline"></div>
-          <div class="cmeta" id="r-meta"></div>
-        </div>
-        <div class="conf-num">
-          <div class="label">Confidence</div>
-          <div class="value" id="r-conf"></div>
-        </div>
-      </div>
-
-      <!-- Sources used -->
-      <div class="card" id="s-sources">
-        <div class="card-head">Sources used</div>
-        <div class="card-body">
-          <div class="tag-row" id="r-sources"></div>
-        </div>
-      </div>
-
-      <!-- Contact -->
-      <div class="card" id="s-contact">
-        <div class="card-head">Contact</div>
-        <div class="card-body" style="display:flex;flex-direction:column;gap:8px">
-          <div class="contact-list" id="r-emails"></div>
-          <div class="contact-list" id="r-phones"></div>
-        </div>
-      </div>
-
-      <!-- Location -->
-      <div class="card" id="s-location">
-        <div class="card-head">Location</div>
-        <div class="card-body" id="r-location"></div>
-      </div>
-
-      <!-- Links -->
-      <div class="card" id="s-links">
-        <div class="card-head">Links</div>
-        <div class="card-body">
-          <div class="tag-row" id="r-links"></div>
-        </div>
-      </div>
-
-      <!-- Skills -->
-      <div class="card" id="s-skills">
-        <div class="card-head">Skills</div>
-        <div class="card-body">
-          <div class="skills-wrap" id="r-skills"></div>
-        </div>
-      </div>
-
-      <!-- Experience -->
-      <div class="card" id="s-exp">
-        <div class="card-head">Experience</div>
-        <div class="card-body">
-          <div id="r-exp"></div>
-        </div>
-      </div>
-
-      <!-- Education -->
-      <div class="card" id="s-edu">
-        <div class="card-head">Education</div>
-        <div class="card-body">
-          <div id="r-edu"></div>
-        </div>
-      </div>
-
-      <!-- Provenance -->
-      <div class="card" id="s-prov">
-        <div class="card-head">Provenance</div>
-        <div class="card-body" style="padding:0;overflow-x:auto">
-          <table class="prov-table">
-            <thead><tr><th>Field</th><th>Source</th><th>Method</th><th>Conf</th></tr></thead>
-            <tbody id="r-prov"></tbody>
-          </table>
-        </div>
-      </div>
-
-      <!-- Raw JSON -->
-      <div class="card">
-        <div class="json-toggle" onclick="toggleJson()" role="button" aria-expanded="false" id="jtoggle">
-          <span style="font-size:11px;font-weight:600;color:#888;text-transform:uppercase;letter-spacing:.5px">Raw JSON</span>
-          <span style="font-size:11px;color:#aaa" id="jchev">&#x25BE;</span>
-        </div>
-        <div id="raw-json">
-          <button class="copy-btn" onclick="copyJson()">Copy</button>
-          <pre id="json-pre"></pre>
-        </div>
-      </div>
-
+    <!-- Single candidate view -->
+    <div id="single-view">
+      <!-- populated by renderSingle() -->
     </div>
-  </div>
 
+    <!-- Batch view -->
+    <div id="batch-view">
+      <div id="batch-header"></div>
+      <div id="batch-body">
+        <div id="batch-list"></div>
+        <div id="batch-detail">
+          <div class="empty" style="height:100%">
+            <p>&#x25B7;</p>
+            <p>Select a candidate from the list.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div>
 </div>
 
 <script>
-  // ── Accordion ────────────────────────────────────────────────────────────
+  // ── State ─────────────────────────────────────────────────────────────────
+  let batchMode  = false;
+  let csvRowCount = 0;
+  let batchResults = [];
+  let selectedIdx  = -1;
+
+  // ── Accordion ─────────────────────────────────────────────────────────────
   function toggle(hdr, bodyId) {
     const body = document.getElementById(bodyId);
     const chev = hdr.querySelector('.chevron');
@@ -577,18 +562,16 @@
     chev.classList.toggle('open', !open);
   }
 
-  // init: close bodies that don't have .open class
   document.querySelectorAll('.source-body').forEach(b => {
     if (!b.classList.contains('open')) b.style.display = 'none';
   });
 
-  // ── File picked ──────────────────────────────────────────────────────────
+  // ── File helpers ──────────────────────────────────────────────────────────
   function picked(inputId, dotId, nameId) {
     const f = document.getElementById(inputId).files[0];
     if (!f) return;
     const nm = document.getElementById(nameId);
-    nm.textContent = f.name;
-    nm.style.display = 'block';
+    nm.textContent = f.name; nm.style.display = 'block';
     if (dotId) document.getElementById(dotId).classList.add('on');
   }
 
@@ -597,24 +580,57 @@
     document.getElementById(dotId).classList.toggle('on', val.length > 0);
   }
 
-  // ── Config tabs ──────────────────────────────────────────────────────────
+  // ── CSV row count detection ───────────────────────────────────────────────
+  function onCsvPicked() {
+    const f = document.getElementById('csv_file').files[0];
+    const bd = document.getElementById('batch-detect');
+    const badge = document.getElementById('mode-badge');
+
+    if (!f) { csvRowCount = 0; batchMode = false; bd.style.display = 'none'; return; }
+
+    const nm = document.getElementById('fn-csv');
+    nm.textContent = f.name; nm.style.display = 'block';
+    document.getElementById('dot-csv').classList.add('on');
+
+    const reader = new FileReader();
+    reader.onload = e => {
+      const lines = e.target.result.split('\n').filter(l => l.trim());
+      csvRowCount = Math.max(0, lines.length - 1); // subtract header
+
+      if (csvRowCount > 1) {
+        batchMode = true;
+        bd.innerHTML = `<strong>${csvRowCount} candidates detected</strong> — batch mode`;
+        bd.style.display = 'block';
+        badge.textContent = `Batch · ${csvRowCount} candidates`;
+        badge.className = 'batch'; badge.style.display = 'inline-block';
+        document.getElementById('btn-label').textContent = `Run batch (${csvRowCount})`;
+      } else {
+        batchMode = false;
+        bd.style.display = 'none';
+        badge.textContent = 'Single candidate';
+        badge.className = 'single'; badge.style.display = 'inline-block';
+        document.getElementById('btn-label').textContent = 'Run pipeline';
+      }
+    };
+    reader.readAsText(f);
+  }
+
+  // ── Config tabs ───────────────────────────────────────────────────────────
   function setCfg(mode) {
     document.getElementById('tab-default').classList.toggle('active', mode === 'default');
     document.getElementById('tab-custom').classList.toggle('active',  mode === 'custom');
-    const area = document.getElementById('cfg-area');
-    area.style.display = mode === 'custom' ? 'flex' : 'none';
+    document.getElementById('cfg-area').style.display = mode === 'custom' ? 'flex' : 'none';
   }
 
-  // ── Run ──────────────────────────────────────────────────────────────────
-  async function run() {
+  // ── Submit ────────────────────────────────────────────────────────────────
+  async function runPipeline() {
     const btn  = document.getElementById('submit-btn');
     const spin = document.getElementById('spin');
     const lbl  = document.getElementById('btn-label');
     const err  = document.getElementById('err');
 
     err.style.display = 'none';
-    btn.disabled = true;
-    spin.style.display = 'block';
+    btn.disabled = true; spin.style.display = 'block';
     lbl.textContent = 'Running…';
 
     const form = new FormData();
@@ -639,198 +655,312 @@
     const hasAnything = f('csv_file').files[0] || f('ats_file').files[0] ||
       f('notes_file').files[0] || f('resume_file').files[0] || gh || li || nt;
 
-    if (!hasAnything) {
-      showErr('Add at least one input source.');
-      reset(); return;
-    }
+    if (!hasAnything) { showErr('Add at least one input source.'); resetBtn(); return; }
 
     try {
-      const res = await fetch('/canonicalize', { method: 'POST', body: form });
+      const endpoint = batchMode ? '/batch' : '/canonicalize';
+      const res = await fetch(endpoint, { method: 'POST', body: form });
       if (!res.ok) {
         const j = await res.json().catch(() => ({}));
         throw new Error(j.detail || 'Server error ' + res.status);
       }
-      render(await res.json());
+      const data = await res.json();
+      if (batchMode || (data && data.results)) {
+        renderBatch(data);
+      } else {
+        renderSingle(data, document.getElementById('single-view'));
+        document.getElementById('empty-state').style.display = 'none';
+        document.getElementById('batch-view').style.display  = 'none';
+        document.getElementById('single-view').style.display = 'flex';
+      }
     } catch (e) { showErr(e.message); }
-    finally { reset(); }
+    finally { resetBtn(); }
   }
 
-  function reset() {
+  function resetBtn() {
     document.getElementById('submit-btn').disabled = false;
-    document.getElementById('spin').style.display = 'none';
-    document.getElementById('btn-label').textContent = 'Run pipeline';
+    document.getElementById('spin').style.display  = 'none';
+    const lbl = batchMode ? `Run batch (${csvRowCount})` : 'Run pipeline';
+    document.getElementById('btn-label').textContent = lbl;
   }
   function showErr(msg) {
     const e = document.getElementById('err');
     e.textContent = msg; e.style.display = 'block';
   }
 
-  // ── Render ───────────────────────────────────────────────────────────────
-  function render(d) {
-    // Hide all optional sections first so stale data from a previous run doesn't bleed through
-    ['s-sources','s-contact','s-location','s-links','s-skills','s-exp','s-edu','s-prov'].forEach(id => {
-      document.getElementById(id).style.display = 'none';
+  // ── Render batch ──────────────────────────────────────────────────────────
+  function renderBatch(data) {
+    batchResults = data.results || [];
+    selectedIdx  = -1;
+
+    const ok  = batchResults.filter(r => !r._error);
+    const avg = ok.length
+      ? (ok.reduce((s,r)=>s+(r.overall_confidence||0),0)/ok.length).toFixed(3)
+      : '—';
+
+    document.getElementById('batch-header').innerHTML =
+      `<strong>${batchResults.length} candidates</strong>&nbsp;&nbsp;
+       <span>${ok.length} succeeded &nbsp; ${batchResults.length - ok.length} failed</span>
+       &nbsp;&nbsp;<span class="avg-conf">avg conf <strong>${avg}</strong></span>`;
+
+    const list = document.getElementById('batch-list');
+    list.innerHTML = '';
+    batchResults.forEach((r, i) => {
+      const conf = r.overall_confidence;
+      const name = r.full_name || r._batch_label || `Candidate ${i+1}`;
+      const skills = (r.skills||[]).length;
+      const confCls = conf >= .85 ? 'hi' : conf >= .70 ? 'md' : 'lo';
+
+      const card = document.createElement('div');
+      card.className = 'cand-card';
+      card.dataset.idx = i;
+
+      if (r._error) {
+        card.innerHTML = `<div class="cn">${x(name)}</div>
+          <div class="cm"><span class="err-tag">Error: ${x(r._error.slice(0,40))}</span></div>`;
+      } else {
+        card.innerHTML = `<div class="cn">${x(name)}</div>
+          <div class="cm">
+            <span class="cconf ${confCls}">${conf ? conf.toFixed(3) : '—'}</span>
+            <span>${skills} skill${skills!==1?'s':''}</span>
+          </div>`;
+      }
+      card.addEventListener('click', () => selectCandidate(i));
+      list.appendChild(card);
     });
 
-    document.getElementById('empty').style.display  = 'none';
-    document.getElementById('result').style.display = 'flex';
+    document.getElementById('empty-state').style.display  = 'none';
+    document.getElementById('single-view').style.display  = 'none';
+    document.getElementById('batch-view').style.display   = 'flex';
 
-    // name / headline
-    document.getElementById('r-name').textContent     = d.full_name || '—';
-    document.getElementById('r-headline').textContent = d.headline  || '';
-
-    // confidence — custom config output may not include this
-    const conf = d.overall_confidence ?? null;
-    const cv = document.getElementById('r-conf');
-    if (conf !== null) {
-      cv.textContent = conf.toFixed(2);
-      cv.className = 'value ' + (conf >= .85 ? 'conf-high' : conf >= .70 ? 'conf-med' : 'conf-low');
-    } else {
-      cv.textContent = '—';
-      cv.className = 'value';
-    }
-
-    // meta chips (years exp + location city)
-    const meta = document.getElementById('r-meta');
-    meta.innerHTML = '';
-    if (d.years_experience) meta.innerHTML += `<span>${d.years_experience.toFixed(1)} yrs exp</span>`;
-    const loc = (d.location && typeof d.location === 'object') ? d.location : {};
-    if (loc.city)    meta.innerHTML += `<span>${x(loc.city)}</span>`;
-    if (loc.country) meta.innerHTML += `<span>${x(loc.country)}</span>`;
-
-    // sources used — derived from provenance
-    const srcEl = document.getElementById('r-sources');
-    srcEl.innerHTML = '';
-    [...new Set((d.provenance||[]).map(p=>p.source).filter(Boolean))].forEach(s => {
-      srcEl.innerHTML += `<span class="tag">${x(s)}</span>`;
-    });
-    vis('s-sources', srcEl.innerHTML !== '');
-
-    // emails / phones
-    // Default schema: d.emails[], d.phones[]
-    // Custom schema may use d.primary_email (string) and d.phone (string)
-    const emails = Array.isArray(d.emails) ? d.emails
-                 : d.primary_email ? [d.primary_email] : [];
-    const phones = Array.isArray(d.phones) ? d.phones
-                 : d.phone ? [d.phone] : [];
-    document.getElementById('r-emails').innerHTML =
-      emails.map(e => `<span class="contact-item">${x(e)}</span>`).join('');
-    document.getElementById('r-phones').innerHTML =
-      phones.map(p => `<span class="contact-item">${x(p)}</span>`).join('');
-    vis('s-contact', emails.length + phones.length > 0);
-
-    // location — only show when we have a real location object with city/country
-    const locEl = document.getElementById('r-location');
-    const locText = [loc.city, loc.region, loc.country].filter(Boolean).join(', ');
-    locEl.textContent = locText || '—';
-    vis('s-location', !!locText);
-
-    // links
-    const lk = d.links || {};
-    const lkEl = document.getElementById('r-links');
-    lkEl.innerHTML = '';
-    if (lk.github)    lkEl.innerHTML += `<a href="${lk.github}" target="_blank" rel="noopener" class="tag" style="text-decoration:none">GitHub</a>`;
-    if (lk.linkedin)  lkEl.innerHTML += `<a href="${lk.linkedin}" target="_blank" rel="noopener" class="tag" style="text-decoration:none">LinkedIn</a>`;
-    if (lk.portfolio) lkEl.innerHTML += `<a href="${lk.portfolio}" target="_blank" rel="noopener" class="tag" style="text-decoration:none">Portfolio</a>`;
-    vis('s-links', lkEl.innerHTML !== '');
-
-    // skills
-    // Default schema: [{name, confidence}]  Custom schema: ["Python", "Java"]
-    const skills = d.skills || [];
-    const skEl = document.getElementById('r-skills');
-    if (skills.length === 0) {
-      skEl.innerHTML = '';
-    } else if (typeof skills[0] === 'string') {
-      // flat string list from custom config — no confidence available
-      skEl.innerHTML = skills.map(s => `<span class="skill">${x(s)}</span>`).join('');
-    } else {
-      // full objects from default schema
-      skEl.innerHTML = [...skills].sort((a,b)=>(b.confidence||0)-(a.confidence||0)).map(s => {
-        const c = s.confidence || 0;
-        const cls = c >= .85 ? 'hi' : c < .70 ? 'lo' : '';
-        return `<span class="skill ${cls}">${x(s.name||'')}<span class="sconf">${c.toFixed(2)}</span></span>`;
-      }).join('');
-    }
-    vis('s-skills', skills.length > 0);
-
-    // experience
-    const expEl = document.getElementById('r-exp');
-    expEl.innerHTML = (d.experience||[]).map(e => {
-      const range = [e.start, e.end].filter(Boolean).join(' – ');
-      return `<div class="tl-item">
-        <div class="tl-line"><div class="tl-circle"></div><div class="tl-bar"></div></div>
-        <div class="tl-body">
-          <div class="tl-title">${x(e.title||'')} at ${x(e.company||'')}</div>
-          ${range ? `<div class="tl-date">${x(range)}</div>` : ''}
-          ${e.summary ? `<div class="tl-sub">${x(e.summary)}</div>` : ''}
-        </div>
-      </div>`;
-    }).join('');
-    vis('s-exp', (d.experience||[]).length > 0);
-
-    // education
-    const eduEl = document.getElementById('r-edu');
-    eduEl.innerHTML = (d.education||[]).map(e => {
-      const deg = [e.degree, e.field].filter(Boolean).join(' in ');
-      return `<div class="tl-item">
-        <div class="tl-line"><div class="tl-circle" style="background:#16a34a"></div><div class="tl-bar"></div></div>
-        <div class="tl-body">
-          <div class="tl-title">${x(e.institution||'')}</div>
-          ${deg ? `<div class="tl-sub">${x(deg)}</div>` : ''}
-          ${e.end_year ? `<div class="tl-date">Graduated ${e.end_year}</div>` : ''}
-        </div>
-      </div>`;
-    }).join('');
-    vis('s-edu', (d.education||[]).length > 0);
-
-    // provenance
-    const pvEl = document.getElementById('r-prov');
-    pvEl.innerHTML = (d.provenance||[]).map(p => `
-      <tr>
-        <td style="font-family:monospace;font-size:11px">${x(p.field||'')}</td>
-        <td><span class="prov-source">${x(p.source||'')}</span></td>
-        <td style="color:#666">${x(p.method||'')}</td>
-        <td class="prov-conf">${(p.confidence||0).toFixed(2)}</td>
-      </tr>`).join('');
-    vis('s-prov', (d.provenance||[]).length > 0);
-
-    // raw json
-    document.getElementById('json-pre').textContent = JSON.stringify(d, null, 2);
-
-    document.querySelector('.right').scrollTo({ top: 0, behavior: 'smooth' });
+    // Auto-select first successful
+    const firstOk = batchResults.findIndex(r => !r._error);
+    if (firstOk >= 0) selectCandidate(firstOk);
   }
 
-  // ── Helpers ──────────────────────────────────────────────────────────────
+  function selectCandidate(idx) {
+    selectedIdx = idx;
+
+    document.querySelectorAll('.cand-card').forEach((c, i) => {
+      c.classList.toggle('active', i === idx);
+    });
+
+    const detail = document.getElementById('batch-detail');
+    const r = batchResults[idx];
+
+    if (r._error) {
+      detail.innerHTML = `<div class="card"><div class="card-body" style="color:#b91c1c">
+        Error: ${x(r._error)}</div></div>`;
+      return;
+    }
+
+    detail.innerHTML = '';
+    renderSingle(r, detail);
+    detail.scrollTo({ top: 0, behavior: 'smooth' });
+  }
+
+  // ── Render single candidate into a container ───────────────────────────────
+  function renderSingle(d, container) {
+    container.innerHTML = '';
+
+    // Name block
+    const conf = d.overall_confidence ?? null;
+    const confCls = conf === null ? '' : conf >= .85 ? 'conf-high' : conf >= .70 ? 'conf-med' : 'conf-low';
+    const confStr = conf !== null ? conf.toFixed(2) : '—';
+
+    const loc = (d.location && typeof d.location === 'object') ? d.location : {};
+    const locText = [loc.city, loc.region, loc.country].filter(Boolean).join(', ');
+
+    let metaHtml = '';
+    if (d.years_experience) metaHtml += `<span>${d.years_experience.toFixed(1)} yrs exp</span>`;
+    if (loc.city)    metaHtml += `<span>${x(loc.city)}</span>`;
+    if (loc.country) metaHtml += `<span>${x(loc.country)}</span>`;
+
+    container.insertAdjacentHTML('beforeend', `
+      <div class="name-block">
+        <div>
+          <div class="cname">${x(d.full_name || '—')}</div>
+          <div class="cheadline">${x(d.headline || '')}</div>
+          <div class="cmeta">${metaHtml}</div>
+        </div>
+        <div class="conf-num">
+          <div class="label">Confidence</div>
+          <div class="value ${confCls}">${confStr}</div>
+        </div>
+      </div>`);
+
+    // Sources used
+    const srcList = [...new Set((d.provenance||[]).map(p=>p.source).filter(Boolean))];
+    if (srcList.length) {
+      container.insertAdjacentHTML('beforeend', `
+        <div class="card">
+          <div class="card-head">Sources used</div>
+          <div class="card-body">
+            <div class="tag-row">${srcList.map(s=>`<span class="tag">${x(s)}</span>`).join('')}</div>
+          </div>
+        </div>`);
+    }
+
+    // Contact
+    const emails = Array.isArray(d.emails) ? d.emails : d.primary_email ? [d.primary_email] : [];
+    const phones = Array.isArray(d.phones) ? d.phones : d.phone       ? [d.phone]         : [];
+    if (emails.length || phones.length) {
+      container.insertAdjacentHTML('beforeend', `
+        <div class="card">
+          <div class="card-head">Contact</div>
+          <div class="card-body" style="display:flex;flex-direction:column;gap:8px">
+            ${emails.length ? `<div class="contact-list">${emails.map(e=>`<span class="contact-item">${x(e)}</span>`).join('')}</div>` : ''}
+            ${phones.length ? `<div class="contact-list">${phones.map(p=>`<span class="contact-item">${x(p)}</span>`).join('')}</div>` : ''}
+          </div>
+        </div>`);
+    }
+
+    // Location
+    if (locText) {
+      container.insertAdjacentHTML('beforeend', `
+        <div class="card">
+          <div class="card-head">Location</div>
+          <div class="card-body">${x(locText)}</div>
+        </div>`);
+    }
+
+    // Links
+    const lk = d.links || {};
+    const lkHtml = [
+      lk.github    ? `<a href="${lk.github}"    target="_blank" rel="noopener" class="tag" style="text-decoration:none">GitHub</a>`    : '',
+      lk.linkedin  ? `<a href="${lk.linkedin}"  target="_blank" rel="noopener" class="tag" style="text-decoration:none">LinkedIn</a>`  : '',
+      lk.portfolio ? `<a href="${lk.portfolio}" target="_blank" rel="noopener" class="tag" style="text-decoration:none">Portfolio</a>` : '',
+    ].join('');
+    if (lkHtml) {
+      container.insertAdjacentHTML('beforeend', `
+        <div class="card">
+          <div class="card-head">Links</div>
+          <div class="card-body"><div class="tag-row">${lkHtml}</div></div>
+        </div>`);
+    }
+
+    // Skills
+    const skills = d.skills || [];
+    if (skills.length) {
+      let skillsHtml;
+      if (typeof skills[0] === 'string') {
+        skillsHtml = skills.map(s => `<span class="skill">${x(s)}</span>`).join('');
+      } else {
+        skillsHtml = [...skills].sort((a,b)=>(b.confidence||0)-(a.confidence||0)).map(s => {
+          const c = s.confidence || 0;
+          const cls = c >= .85 ? 'hi' : c < .70 ? 'lo' : '';
+          return `<span class="skill ${cls}">${x(s.name||'')}<span class="sconf">${c.toFixed(2)}</span></span>`;
+        }).join('');
+      }
+      container.insertAdjacentHTML('beforeend', `
+        <div class="card">
+          <div class="card-head">Skills (${skills.length})</div>
+          <div class="card-body"><div class="skills-wrap">${skillsHtml}</div></div>
+        </div>`);
+    }
+
+    // Experience
+    if ((d.experience||[]).length) {
+      const expHtml = d.experience.map(e => {
+        const range = [e.start, e.end].filter(Boolean).join(' – ');
+        return `<div class="tl-item">
+          <div class="tl-line"><div class="tl-circle"></div><div class="tl-bar"></div></div>
+          <div class="tl-body">
+            <div class="tl-title">${x(e.title||'')} at ${x(e.company||'')}</div>
+            ${range   ? `<div class="tl-date">${x(range)}</div>` : ''}
+            ${e.summary ? `<div class="tl-sub">${x(e.summary)}</div>` : ''}
+          </div>
+        </div>`;
+      }).join('');
+      container.insertAdjacentHTML('beforeend', `
+        <div class="card">
+          <div class="card-head">Experience</div>
+          <div class="card-body">${expHtml}</div>
+        </div>`);
+    }
+
+    // Education
+    if ((d.education||[]).length) {
+      const eduHtml = d.education.map(e => {
+        const deg = [e.degree, e.field].filter(Boolean).join(' in ');
+        return `<div class="tl-item">
+          <div class="tl-line"><div class="tl-circle" style="background:#16a34a"></div><div class="tl-bar"></div></div>
+          <div class="tl-body">
+            <div class="tl-title">${x(e.institution||'')}</div>
+            ${deg   ? `<div class="tl-sub">${x(deg)}</div>` : ''}
+            ${e.end_year ? `<div class="tl-date">Graduated ${e.end_year}</div>` : ''}
+          </div>
+        </div>`;
+      }).join('');
+      container.insertAdjacentHTML('beforeend', `
+        <div class="card">
+          <div class="card-head">Education</div>
+          <div class="card-body">${eduHtml}</div>
+        </div>`);
+    }
+
+    // Provenance
+    if ((d.provenance||[]).length) {
+      const pvHtml = d.provenance.map(p => `
+        <tr>
+          <td style="font-family:monospace;font-size:11px">${x(p.field||'')}</td>
+          <td><span class="prov-source">${x(p.source||'')}</span></td>
+          <td style="color:#666">${x(p.method||'')}</td>
+          <td class="prov-conf">${(p.confidence||0).toFixed(2)}</td>
+        </tr>`).join('');
+      container.insertAdjacentHTML('beforeend', `
+        <div class="card">
+          <div class="card-head">Provenance</div>
+          <div class="card-body" style="padding:0;overflow-x:auto">
+            <table class="prov-table">
+              <thead><tr><th>Field</th><th>Source</th><th>Method</th><th>Conf</th></tr></thead>
+              <tbody>${pvHtml}</tbody>
+            </table>
+          </div>
+        </div>`);
+    }
+
+    // Raw JSON (collapsible)
+    const jsonId  = 'rj-' + Math.random().toString(36).slice(2);
+    const chevId  = 'rc-' + Math.random().toString(36).slice(2);
+    const copyId  = 'cp-' + Math.random().toString(36).slice(2);
+    const preId   = 'pr-' + Math.random().toString(36).slice(2);
+    container.insertAdjacentHTML('beforeend', `
+      <div class="card">
+        <div class="json-toggle" onclick="toggleBlock('${jsonId}','${chevId}')">
+          <span style="font-size:11px;font-weight:600;color:#888;text-transform:uppercase;letter-spacing:.5px">Raw JSON</span>
+          <span style="font-size:11px;color:#aaa" id="${chevId}">&#x25BE;</span>
+        </div>
+        <div class="raw-json-body" id="${jsonId}">
+          <button class="copy-btn" id="${copyId}" onclick="copyPre('${preId}','${copyId}')">Copy</button>
+          <pre id="${preId}">${x(JSON.stringify(d,null,2))}</pre>
+        </div>
+      </div>`);
+  }
+
+  // ── Helpers ───────────────────────────────────────────────────────────────
   function x(s) {
     return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
   }
-  function vis(id, show) {
-    document.getElementById(id).style.display = show ? '' : 'none';
+
+  function toggleBlock(bodyId, chevId) {
+    const body = document.getElementById(bodyId);
+    const open = body.style.display !== 'none' && body.style.display !== '';
+    body.style.display = open ? 'none' : 'block';
+    document.getElementById(chevId).style.transform = open ? '' : 'rotate(180deg)';
   }
 
-  function toggleJson() {
-    const raw  = document.getElementById('raw-json');
-    const open = raw.style.display !== 'none';
-    raw.style.display = open ? 'none' : 'block';
-    document.getElementById('jchev').style.transform = open ? '' : 'rotate(180deg)';
-    document.getElementById('jtoggle').setAttribute('aria-expanded', String(!open));
-  }
-
-  function copyJson() {
-    navigator.clipboard.writeText(document.getElementById('json-pre').textContent).then(() => {
-      const b = document.querySelector('.copy-btn');
+  function copyPre(preId, btnId) {
+    navigator.clipboard.writeText(document.getElementById(preId).textContent).then(() => {
+      const b = document.getElementById(btnId);
       b.textContent = 'Copied';
       setTimeout(() => b.textContent = 'Copy', 1500);
     });
   }
 
-  // hide result sections initially
-  document.querySelectorAll('[id^="s-"]').forEach(el => el.style.display = 'none');
-  document.getElementById('result').style.display = 'none';
-
-  // keyboard shortcut
+  // ── Keyboard shortcut ─────────────────────────────────────────────────────
   document.addEventListener('keydown', e => {
-    if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') run();
+    if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') runPipeline();
   });
 </script>
 

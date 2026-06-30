@@ -7,6 +7,8 @@ Routes
   POST /canonicalize → multipart form: files + URL fields + optional config
 """
 
+import contextlib
+import io
 import json
 import os
 import tempfile
@@ -18,6 +20,7 @@ from fastapi.responses import FileResponse, JSONResponse
 from fastapi.staticfiles import StaticFiles
 
 from app.pipeline import run as pipeline_run
+from app.batch import run_batch
 
 app = FastAPI(title="Candidate Canonicalization API", version="1.0.0")
 
@@ -100,6 +103,82 @@ async def canonicalize(
             candidate_id=candidate_id or None,
         )
         return JSONResponse(content=result)
+
+    except Exception as exc:
+        raise HTTPException(status_code=500, detail=str(exc))
+
+    finally:
+        for p in tmp_files:
+            try:
+                os.unlink(p)
+            except OSError:
+                pass
+
+
+@app.post("/batch")
+async def batch_canonicalize(
+    csv_file:     Optional[UploadFile] = File(None),
+    ats_file:     Optional[UploadFile] = File(None),
+    notes_file:   Optional[UploadFile] = File(None),
+    resume_file:  Optional[UploadFile] = File(None),
+    config_file:  Optional[UploadFile] = File(None),
+    github_url:   Optional[str]        = Form(None),
+    linkedin_url: Optional[str]        = Form(None),
+    notes_text:   Optional[str]        = Form(None),
+    config_json:  Optional[str]        = Form(None),
+):
+    if not csv_file and not ats_file:
+        raise HTTPException(status_code=400, detail="batch requires csv_file or ats_file")
+
+    tmp_files = []
+
+    async def save(upload: UploadFile, suffix: str) -> str:
+        content = await upload.read()
+        f = tempfile.NamedTemporaryFile(delete=False, suffix=suffix)
+        f.write(content)
+        f.close()
+        tmp_files.append(f.name)
+        return f.name
+
+    def save_text(text: str, suffix: str) -> str:
+        f = tempfile.NamedTemporaryFile(mode="w", delete=False, suffix=suffix, encoding="utf-8")
+        f.write(text)
+        f.close()
+        tmp_files.append(f.name)
+        return f.name
+
+    try:
+        csv_path = ats_path = notes_path = resume_path = config_path = None
+
+        if csv_file and csv_file.filename:
+            csv_path = await save(csv_file, ".csv")
+        if ats_file and ats_file.filename:
+            ats_path = await save(ats_file, ".json")
+        if notes_file and notes_file.filename:
+            notes_path = await save(notes_file, ".txt")
+        elif notes_text and notes_text.strip():
+            notes_path = save_text(notes_text.strip(), ".txt")
+        if resume_file and resume_file.filename:
+            resume_path = await save(resume_file, ".pdf")
+        if config_file and config_file.filename:
+            config_path = await save(config_file, ".json")
+        elif config_json and config_json.strip():
+            config_path = save_text(config_json.strip(), ".json")
+
+        _sink = io.StringIO()
+        with contextlib.redirect_stdout(_sink):
+            results = run_batch(
+                csv_path=csv_path,
+                ats_json_path=ats_path,
+                github_url=github_url or None,
+                resume_path=resume_path,
+                notes_path=notes_path,
+                linkedin_url=linkedin_url or None,
+                output_config_path=config_path,
+                print_json=False,
+            )
+
+        return JSONResponse(content={"count": len(results), "results": results})
 
     except Exception as exc:
         raise HTTPException(status_code=500, detail=str(exc))
