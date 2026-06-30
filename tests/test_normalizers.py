@@ -34,10 +34,11 @@ class TestPhone:
         assert to_e164(None) is None  # type: ignore[arg-type]
 
     def test_deduplication(self):
-        phones = normalise_phones(["+14155552671", "(415) 555-2671", "+919876543210"])
+        # Default region is IN — same Indian number in different formats deduplicates
+        phones = normalise_phones(["+919876543210", "9876543210", "+14155552671"])
         assert len(phones) == 2
-        assert "+14155552671" in phones
         assert "+919876543210" in phones
+        assert "+14155552671" in phones
 
     def test_garbage_source_does_not_crash(self):
         # Edge case: garbage source mixed with valid numbers

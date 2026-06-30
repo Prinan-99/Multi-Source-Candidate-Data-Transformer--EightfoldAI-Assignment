@@ -29,7 +29,9 @@ Conflict-resolution policy
 from __future__ import annotations
 import hashlib
 import json
-from typing import Any
+from typing import Any, Callable, TypeVar
+
+_T = TypeVar("_T")
 
 from app.schema import (
     CanonicalCandidate,
@@ -215,7 +217,6 @@ def _merge_skills(
     result: list[Skill] = []
     for name, source_confs in skill_map.items():
         # Confidence boost: 1 - product(1 - c) across sources
-        combined = 1.0 - 1.0
         product = 1.0
         for c in source_confs.values():
             product *= (1.0 - c)
@@ -232,37 +233,48 @@ def _merge_skills(
     return result
 
 
+def _dedup_entries(
+    extractions: list[RawExtraction],
+    provenance: list[ProvenanceEntry],
+    field: str,
+    key_fields: tuple[str, str],
+    make_entry: Callable[[dict], _T],
+) -> list[_T]:
+    """
+    Shared dedup loop for list fields (experience, education).
+    Iterates ext.<field>, builds a two-part key from key_fields, keeps the
+    highest-confidence entry per key, and records provenance.
+    """
+    seen: dict[str, _T] = {}
+    seen_conf: dict[str, float] = {}
+    for ext in extractions:
+        for fv in getattr(ext, field):
+            d = fv.value if isinstance(fv.value, dict) else {}
+            k1 = (d.get(key_fields[0]) or "").strip()
+            k2 = (d.get(key_fields[1]) or "").strip()
+            key = f"{k1.lower()}|{k2.lower()}"
+            if key not in seen or fv.confidence > seen_conf.get(key, 0):
+                seen[key] = make_entry(d)
+                seen_conf[key] = fv.confidence
+                provenance.append(_prov(field, fv))
+    return list(seen.values())
+
+
 def _merge_experience(
     extractions: list[RawExtraction],
     provenance: list[ProvenanceEntry],
 ) -> list[Experience]:
     """Deduplicate by (company, title) key; highest confidence wins."""
-    seen: dict[str, Experience] = {}
-    seen_conf: dict[str, float] = {}
-
-    for ext in extractions:
-        for fv in ext.experience:
-            d = fv.value if isinstance(fv.value, dict) else {}
-            company = (d.get("company") or "").strip()
-            title = (d.get("title") or "").strip()
-            key = f"{company.lower()}|{title.lower()}"
-
-            if key not in seen or fv.confidence > seen_conf.get(key, 0):
-                seen[key] = Experience(
-                    company=company or "Unknown",
-                    title=title or None,
-                    start=d.get("start"),
-                    end=d.get("end"),
-                    summary=d.get("summary"),
-                )
-                seen_conf[key] = fv.confidence
-                provenance.append(_prov("experience", fv))
-
-    # Sort by start date descending (most recent first); unknowns go last
-    def _sort_key(exp: Experience) -> str:
-        return exp.start or "0000-00"
-
-    return sorted(seen.values(), key=_sort_key, reverse=True)
+    def make(d: dict) -> Experience:
+        return Experience(
+            company=(d.get("company") or "").strip() or "Unknown",
+            title=(d.get("title") or "").strip() or None,
+            start=d.get("start"),
+            end=d.get("end"),
+            summary=d.get("summary"),
+        )
+    entries = _dedup_entries(extractions, provenance, "experience", ("company", "title"), make)
+    return sorted(entries, key=lambda e: e.start or "0000-00", reverse=True)
 
 
 def _merge_education(
@@ -270,27 +282,15 @@ def _merge_education(
     provenance: list[ProvenanceEntry],
 ) -> list[Education]:
     """Deduplicate by (institution, degree) key."""
-    seen: dict[str, Education] = {}
-    seen_conf: dict[str, float] = {}
-
-    for ext in extractions:
-        for fv in ext.education:
-            d = fv.value if isinstance(fv.value, dict) else {}
-            institution = (d.get("institution") or "").strip()
-            degree = (d.get("degree") or "").strip()
-            key = f"{institution.lower()}|{degree.lower()}"
-
-            if key not in seen or fv.confidence > seen_conf.get(key, 0):
-                seen[key] = Education(
-                    institution=institution or "Unknown",
-                    degree=degree or None,
-                    field=d.get("field"),
-                    end_year=d.get("end_year"),
-                )
-                seen_conf[key] = fv.confidence
-                provenance.append(_prov("education", fv))
-
-    return sorted(seen.values(), key=lambda e: -(e.end_year or 0))
+    def make(d: dict) -> Education:
+        return Education(
+            institution=(d.get("institution") or "").strip() or "Unknown",
+            degree=(d.get("degree") or "").strip() or None,
+            field=d.get("field"),
+            end_year=d.get("end_year"),
+        )
+    entries = _dedup_entries(extractions, provenance, "education", ("institution", "degree"), make)
+    return sorted(entries, key=lambda e: -(e.end_year or 0))
 
 
 def _compute_years_experience(experience: list[Experience]) -> float | None:
@@ -315,4 +315,4 @@ def _prov(field: str, fv: FieldValue) -> ProvenanceEntry:
 
 
 def _generate_id(seed: str) -> str:
-    return "cand_" + hashlib.md5(seed.encode()).hexdigest()[:12]
+    return "cand_" + hashlib.sha256(seed.encode()).hexdigest()[:12]

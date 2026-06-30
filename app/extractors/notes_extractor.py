@@ -7,11 +7,12 @@ Only extracts: name, emails, phones, LinkedIn/GitHub links, location.
 """
 
 from __future__ import annotations
+import re
 from pathlib import Path
 from typing import Any
 
 from app.schema import FieldValue, RawExtraction
-from app.normalizers.phone import to_e164
+from app.normalizers.phone import parse_phone
 from app.normalizers.location import parse_location
 from app.extractors.resume_extractor import (
     _EMAIL_RE, _PHONE_RE, _LINKEDIN_RE, _GITHUB_RE,
@@ -43,7 +44,6 @@ def extract_from_notes(path: str | Path) -> RawExtraction:
     if not lines:
         return ext
 
-    import re
     _URL_RE = re.compile(r"https?://|www\.", re.IGNORECASE)
     # Labels like "Candidate: Jane Doe" or "Name: Jane Doe"
     _LABEL_RE = re.compile(r"^(candidate|name|applicant)\s*:\s*", re.IGNORECASE)
@@ -67,8 +67,7 @@ def extract_from_notes(path: str | Path) -> RawExtraction:
     # Phones
     seen: set[str] = set()
     for raw in _PHONE_RE.findall(text):
-        normalised = to_e164(raw)
-        target = normalised if normalised else raw
+        target, _ = parse_phone(raw, BASE_CONFIDENCE)
         if target not in seen:
             seen.add(target)
             ext.phones.append(_fv(target))

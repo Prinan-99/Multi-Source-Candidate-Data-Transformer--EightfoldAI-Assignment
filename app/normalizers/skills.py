@@ -12,7 +12,7 @@ _SKILL_ALIASES: dict[str, str] = {
     # Python ecosystem
     "python": "Python", "python3": "Python", "py": "Python",
     "django": "Django", "flask": "Flask", "fastapi": "FastAPI",
-    "pandas": "Pandas", "numpy": "NumPy", "numpy": "NumPy",
+    "pandas": "Pandas", "numpy": "NumPy",
     "scikit-learn": "scikit-learn", "sklearn": "scikit-learn",
     "tensorflow": "TensorFlow", "tf": "TensorFlow",
     "pytorch": "PyTorch", "torch": "PyTorch",

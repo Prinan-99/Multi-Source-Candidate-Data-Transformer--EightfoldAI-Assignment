@@ -5,7 +5,7 @@ import re
 import phonenumbers
 
 
-def to_e164(raw: str, default_region: str = "US") -> str | None:
+def to_e164(raw: str, default_region: str = "IN") -> str | None:
     """
     Parse and format a phone number as E.164.
     Returns None if the number cannot be parsed or is invalid.
@@ -38,7 +38,7 @@ def to_e164(raw: str, default_region: str = "US") -> str | None:
     return None
 
 
-def normalise_phones(raw_list: list[str], default_region: str = "US") -> list[str]:
+def normalise_phones(raw_list: list[str], default_region: str = "IN") -> list[str]:
     """Normalise a list of raw strings; return only valid E.164 values, deduplicated."""
     seen: set[str] = set()
     result: list[str] = []
@@ -48,3 +48,12 @@ def normalise_phones(raw_list: list[str], default_region: str = "US") -> list[st
             seen.add(normalised)
             result.append(normalised)
     return result
+
+
+def parse_phone(raw: str, base_confidence: float) -> tuple[str, float]:
+    """
+    Try to normalise raw to E.164; fall back to raw string.
+    Returns (value, confidence) — confidence is halved when normalisation fails.
+    """
+    normalised = to_e164(str(raw))
+    return (normalised if normalised else raw, base_confidence if normalised else 0.5)

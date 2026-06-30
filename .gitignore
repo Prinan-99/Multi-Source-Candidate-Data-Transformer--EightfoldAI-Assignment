@@ -15,6 +15,10 @@ pria_ats.json
 candidate.json
 *.log
 
+# Screenshots / loose images dropped in root
+Screenshot*.png
+Screenshot*.jpg
+
 # Internal test artifacts
 sample_data/conflict_test_cases.json
 sample_data/merge_ground_truth.json

@@ -20,7 +20,7 @@ from pathlib import Path
 from typing import Any
 
 from app.schema import FieldValue, RawExtraction
-from app.normalizers.phone import to_e164
+from app.normalizers.phone import parse_phone
 from app.normalizers.date import to_year_month
 from app.normalizers.location import parse_location
 from app.normalizers.skills import canonicalise_skill
@@ -119,14 +119,10 @@ def _extract_contact(ext: RawExtraction, text: str, lines: list[str]) -> None:
     # Phones
     seen_phones: set[str] = set()
     for raw_phone in _PHONE_RE.findall(text):
-        normalised = to_e164(raw_phone)
-        target = normalised if normalised else raw_phone
+        target, conf = parse_phone(raw_phone, BASE_CONFIDENCE)
         if target not in seen_phones:
             seen_phones.add(target)
-            ext.phones.append(_fv(
-                target,
-                confidence=BASE_CONFIDENCE if normalised else 0.50,
-            ))
+            ext.phones.append(_fv(target, confidence=conf))
 
     # LinkedIn
     m = _LINKEDIN_RE.search(text)

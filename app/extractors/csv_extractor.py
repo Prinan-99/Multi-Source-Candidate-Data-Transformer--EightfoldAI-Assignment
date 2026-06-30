@@ -18,7 +18,7 @@ from pathlib import Path
 from typing import Any
 
 from app.schema import FieldValue, RawExtraction
-from app.normalizers.phone import to_e164
+from app.normalizers.phone import parse_phone
 from app.normalizers.location import parse_location
 from app.normalizers.skills import canonicalise_skill
 
@@ -87,11 +87,8 @@ def _parse_row(row: dict[str, str]) -> RawExtraction:
     # Phones
     phone = _col(row, "phone", "phone_number", "mobile", "contact")
     if phone:
-        normalised = to_e164(phone)
-        ext.phones.append(_fv(
-            normalised if normalised else phone,
-            confidence=BASE_CONFIDENCE if normalised else 0.5,
-        ))
+        val, conf = parse_phone(phone, BASE_CONFIDENCE)
+        ext.phones.append(_fv(val, confidence=conf))
 
     # Location
     location_raw = _col(row, "location", "city", "address")

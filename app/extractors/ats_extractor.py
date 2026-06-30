@@ -21,11 +21,12 @@ Confidence: 0.80 (semi-structured; field names vary across ATS vendors)
 
 from __future__ import annotations
 import json
+import re
 from pathlib import Path
 from typing import Any
 
 from app.schema import FieldValue, RawExtraction
-from app.normalizers.phone import to_e164
+from app.normalizers.phone import parse_phone
 from app.normalizers.location import parse_location
 from app.normalizers.skills import canonicalise_skill
 from app.normalizers.date import to_year_month
@@ -61,12 +62,15 @@ def extract_from_ats(path: str | Path) -> list[RawExtraction]:
 
     # Normalise to list
     if isinstance(raw, dict):
-        # Might be wrapped: {"candidates": [...]} or {"data": {...}}
-        if "candidates" in raw:
-            records = raw["candidates"] if isinstance(raw["candidates"], list) else [raw["candidates"]]
-        elif "data" in raw:
-            records = raw["data"] if isinstance(raw["data"], list) else [raw["data"]]
-        else:
+        # Normalise common ATS envelope keys to a flat list of candidate records
+        _found = False
+        for _key in ("candidates", "data", "records", "results"):
+            if _key in raw:
+                val = raw[_key]
+                records = val if isinstance(val, list) else [val]
+                _found = True
+                break
+        if not _found:
             records = [raw]
     elif isinstance(raw, list):
         records = raw
@@ -105,17 +109,15 @@ def _parse_record(r: dict) -> RawExtraction:
     phone_val = _get(r, "phone", "phone_number", "phoneNumber",
                      "mobile_phone", "work_phone", "mobile")
     if phone_val:
-        normalised = to_e164(str(phone_val))
-        ext.phones.append(_fv(normalised or str(phone_val),
-                               confidence=BASE_CONFIDENCE if normalised else 0.5))
+        val, conf = parse_phone(str(phone_val), BASE_CONFIDENCE)
+        ext.phones.append(_fv(val, confidence=conf))
     phone_list = _get(r, "phones", "phone_numbers", "phoneNumbers")
     if isinstance(phone_list, list):
         for p in phone_list:
             raw_p = p if isinstance(p, str) else p.get("value", "") if isinstance(p, dict) else ""
             if raw_p:
-                normalised = to_e164(str(raw_p))
-                ext.phones.append(_fv(normalised or str(raw_p),
-                                       confidence=BASE_CONFIDENCE if normalised else 0.5))
+                val, conf = parse_phone(str(raw_p), BASE_CONFIDENCE)
+                ext.phones.append(_fv(val, confidence=conf))
 
     # ── Location ──────────────────────────────────────────────────────────
     loc_raw = _get(r, "location", "current_location", "location_name", "address")
@@ -165,7 +167,6 @@ def _parse_record(r: dict) -> RawExtraction:
                     method="direct",
                 ))
     elif isinstance(skill_raw, str):
-        import re
         for s in re.split(r"[,;|]+", skill_raw):
             s = s.strip()
             if s:
@@ -215,7 +216,6 @@ def _parse_record(r: dict) -> RawExtraction:
                                 "end_date", "graduationDate")
             end_year = None
             if end_year_raw:
-                import re
                 m = re.search(r"\b(19|20)\d{2}\b", str(end_year_raw))
                 end_year = int(m.group(0)) if m else None
             ext.education.append(_fv({

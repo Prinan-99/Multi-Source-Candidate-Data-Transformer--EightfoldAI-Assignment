@@ -36,17 +36,20 @@ def run(
     but the pipeline works with any non-zero subset.
     """
     extractions: list[RawExtraction] = []
+    warnings: list[str] = []
 
     # ── Structured sources ────────────────────────────────────────────────
     if csv_path:
         try:
             from app.extractors.csv_extractor import extract_from_csv
             rows = extract_from_csv(csv_path)
-            # Each CSV row is a distinct candidate; take the first row by default.
-            # In multi-row CSVs the caller should pass a single-row file or use --id
-            # to identify the target candidate.
             if rows:
                 extractions.append(rows[0])
+                if len(rows) > 1:
+                    warnings.append(
+                        f"CSV has {len(rows)} rows — only row 1 was processed. "
+                        "Use batch mode for multiple candidates."
+                    )
             print(f"[pipeline] CSV: using row 1 of {len(rows)} from {csv_path}")
         except Exception as exc:
             print(f"[pipeline] CSV extractor failed: {exc}", file=sys.stderr)
@@ -114,5 +117,8 @@ def run(
 
     # ── Project ───────────────────────────────────────────────────────────
     output = project(canonical, config)
+
+    if warnings:
+        output["_warnings"] = warnings
 
     return output

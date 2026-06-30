@@ -1,330 +1,160 @@
 # Multi-Source Candidate Data Transformer
 **Eightfold Engineering Intern Assignment — Pria Nandhini M A**
 
-Takes candidate data from multiple sources — recruiter spreadsheet, ATS export, GitHub profile, LinkedIn profile, resume PDF, and recruiter notes — and merges them into one clean canonical JSON profile with confidence scoring, conflict resolution, and full provenance tracking on every field.
-
-Exposes the same pipeline as a CLI tool, a REST API, and a web UI. Results are automatically persisted to AWS S3.
+Takes candidate data from multiple sources — recruiter spreadsheet, ATS export, GitHub profile, LinkedIn profile, resume PDF, and recruiter notes — and produces one clean canonical JSON profile with confidence scoring, conflict resolution, and per-field provenance.
 
 ---
 
-## Architecture
-
-### Overview
-
-```
-6 Sources  ──►  Extractors  ──►  Merger  ──►  Projector  ──►  Output
-                (Strategy)      (Conflict     (Config-
-                                Resolution)    Driven)
-```
-
-The pipeline is a **multi-source ETL** built around three independently testable layers. Each layer knows nothing about the others — extractors don't know how data will be merged, the merger doesn't know what the output shape will be, the projector doesn't know where data came from.
-
----
-
-### Layer 1 — Extractors (Strategy Pattern)
-
-```
-Recruiter CSV   →  csv_extractor    ─┐
-ATS JSON        →  ats_extractor    ─┤
-GitHub API      →  github_extractor ─┤──► [ RawExtraction list ]
-LinkedIn API    →  linkedin_extractor─┤      { value, source,
-Resume PDF      →  resume_extractor ─┤        method, confidence }
-Recruiter Notes →  notes_extractor  ─┘
-```
-
-Each source has one extractor that returns a `RawExtraction(value, source, method, confidence)`. The merger sees a flat list of these — it never cares how GitHub data was fetched vs. how a CSV was parsed. Adding a 7th source means writing one new extractor file, nothing else changes.
-
----
-
-### Layer 2 — Merger (Conflict Resolution Engine)
-
-```
-RawExtraction list
-        │
-        ▼
-┌───────────────────────────────────────────────┐
-│  For each canonical field:                    │
-│                                               │
-│  Scalar (name, headline, location)            │
-│    → highest confidence source wins           │
-│    → if two sources within 0.05 and disagree  │
-│      → flag conflict, penalize overall conf   │
-│                                               │
-│  Arrays (emails, phones)                      │
-│    → union all sources + deduplicate          │
-│    → phones normalized to E.164 before dedup  │
-│                                               │
-│  Skills                                       │
-│    → union across all sources                 │
-│    → same skill in N sources → compound boost │
-│      conf = 1 − ∏(1 − cᵢ)                     │ 
-│                                               │
-│  Experience / Education                       │
-│    → deduplicate by (company, title)          │
-│    → most-confident entry retained            │
-│                                               │
-│  Every field writes provenance:               │
-│    { field, source, method, confidence }      │
-└───────────────────────────────────────────────┘
-        │
-        ▼
-  CanonicalCandidate (13 fields, fixed schema)
-```
-
-The provenance record is the audit trail — every field carries which source won, the method used to extract it, and the confidence that got it there.
-
----
-
-### Layer 3 — Projector (Config-Driven Output Shaping)
-
-```
-CanonicalCandidate (internal, fixed)
-        │
-        ▼
-  output_config.json
-  ┌─────────────────────────────────────────────┐
-  │  { "fields": [                              │
-  │      { "path": "primary_email",             │
-  │        "from": "emails[0]",                 │
-  │        "normalize": "E164" },               │
-  │      { "path": "skills",                    │
-  │        "from": "skills[].name",             │
-  │        "normalize": "canonical" }           │
-  │    ],                                       │
-  │    "include_provenance": false,             │
-  │    "on_missing": "null"                     │
-  │  }                                          │
-  └─────────────────────────────────────────────┘
-        │
-        ▼
-  Reshaped output (any shape, any field names)
-```
-
-The same pipeline serves CLI users, ATS integrations, and front-end cards — each with a different config, no code changes. The Projector is essentially a lightweight field-mapping DSL.
-
----
-
-### API Layer — Three Delivery Modes
-
-```
-POST /canonicalize
-  ──► pipeline.run() ──► JSONResponse
-      (single, waits, returns full result)
-
-POST /batch
-  ──► batch.run_batch() ──► JSONResponse({ count, results, s3_keys })
-      (all candidates, buffers everything, returns at end)
-
-POST /batch/stream
-  ──► batch.run_batch_iter()   ← Python generator, yields one result at a time
-      │
-      ▼
-  StreamingResponse (NDJSON)
-      │
-      ▼  (browser)
-  fetch() → ReadableStream → decode chunks → split \n → parse JSON
-      │
-      ▼
-  candidate card animates in immediately (no waiting for others)
-```
-
-The streaming endpoint uses a **generator + StreamingResponse** so the browser renders each candidate the moment it is ready — not after all 5 finish.
-
----
-
-### Storage — Best-Effort S3
-
-```
-pipeline result
-      │
-      ├──► return to caller  (always, blocking)
-      │
-      └──► S3 upload         (try/except, non-blocking)
-             profiles/<id>_<name>.json          ← single run
-             profiles/batch_<ts>/<n>_<name>.json ← batch run
-```
-
-S3 upload is fire-and-forget — a storage outage never blocks the API response. The `/profiles` endpoints expose list/get/delete over whatever is stored.
-
----
-
-### Key Design Decisions
-
-| Decision | Why |
-|---|---|
-| Confidence weights per source | Avoids hard-coded "CSV always wins" — degrades gracefully when sources are missing |
-| Compound skill confidence `1 − ∏(1−cᵢ)` | Same skill in 3 sources should be near-certain, not just the max of three |
-| Generator for streaming | Zero buffering — candidate renders in UI the moment processing finishes |
-| Projector as config DSL | One pipeline core serves CLI, REST API, and any ATS integration format |
-| Provenance on every field | Recruiter sees *why* a value was chosen, not just what it is |
-| Best-effort S3 | Storage failure never surfaces to the caller during a live demo or prod request |
-
----
-
-## Setup
+## Quick start
 
 ```bash
 pip install -r requirements.txt
-```
 
-**AWS credentials** — create a `.env` file in the project root:
-```
-AWS_ACCESS_KEY_ID=your_key
-AWS_SECRET_ACCESS_KEY=your_secret
-AWS_DEFAULT_REGION=ap-southeast-1
-S3_BUCKET_NAME=your-bucket-name
-```
-
-**Optional — GitHub token** (raises rate limit from 60 → 5000 req/hr):
-```bash
-export GITHUB_TOKEN=ghp_your_token_here
-```
-
-**Optional — LinkedIn live fetch** (requires ProxyCurl):
-```bash
-export PROXYCURL_API_KEY=pcp_your_key_here
-```
-
----
-
-## CLI
-
-### Single candidate
-
-```bash
+# CLI — minimum viable run
 python3 canonicalize.py \
-  --csv   sample_data/sample_recruiter.csv \
-  --github https://github.com/Prinan-99 \
-  --notes  sample_data/sample_notes.txt \
-  --output candidate.json
-```
+  --csv sample_data/sample_recruiter.csv \
+  --github https://github.com/Prinan-99
 
-Prints a summary card with confidence bar, skills, provenance count, and elapsed time. JSON saved to file.
-
-### Batch (auto-detected)
-
-```bash
-python3 canonicalize.py \
-  --csv sample_data/multi_candidates.csv \
-  --output-dir batch_output/
-```
-
-No `--batch` flag needed. The CLI peeks at the CSV row count and routes automatically. If the CSV has more than one data row, every candidate is processed independently. Shows a live progress line per candidate and a final summary table.
-
-### All sources
-
-```bash
-python3 canonicalize.py \
-  --csv    sample_data/sample_recruiter.csv \
-  --ats    sample_data/sample_ats.json \
-  --github https://github.com/Prinan-99 \
-  --notes  sample_data/sample_notes.txt \
-  --resume "sample_data/Sasidharan_Selvakumar _Resume_Updated.pdf" \
-  --config config/sample_config.json \
-  --output candidate.json
-```
-
-### CLI Flags
-
-| Flag | Description |
-|------|-------------|
-| `--csv PATH` | Recruiter CSV |
-| `--ats PATH` | ATS JSON export |
-| `--github URL` | GitHub profile URL |
-| `--linkedin URL` | LinkedIn URL (requires `PROXYCURL_API_KEY`) |
-| `--resume PATH` | Resume PDF |
-| `--notes PATH` | Recruiter notes `.txt` |
-| `--config PATH` | Output config JSON |
-| `--output / -o PATH` | Save JSON to file |
-| `--output-dir PATH` | Save one JSON per candidate (batch mode) |
-| `--id TEXT` | Override candidate_id (single mode) |
-| `--pretty / --compact` | Pretty-print output (default: pretty) |
-| `--quiet` | Suppress all UI chrome — emit only JSON |
-
----
-
-## Web UI + REST API
-
-### Start the server
-
-```bash
+# Web UI
 uvicorn app.server:app --port 8000
-```
-
-Open **http://localhost:8000** in a browser.
-
-### UI features
-
-- Upload any combination of sources in the left panel
-- CSV with multiple rows → automatically switches to **batch mode** (detected client-side from row count before submission)
-- **Single candidate**: shows confidence bar, contact, skills, experience, education, provenance table
-- **Batch**: candidates appear in a sidebar one by one as they stream from the server — no waiting for all to finish. Click any card to see the full canonical profile in the detail pane
-- **Saved Profiles** drawer (top-right) — lists every profile stored in S3; click to reload, delete to remove
-
-### REST API endpoints
-
-| Method | Path | Description |
-|--------|------|-------------|
-| `POST` | `/canonicalize` | Single candidate — multipart form, returns JSON |
-| `POST` | `/batch` | Batch — multipart form, returns `{count, results, s3_keys}` |
-| `POST` | `/batch/stream` | Batch streaming — returns NDJSON, one line per candidate as it completes |
-| `GET`  | `/profiles` | List all profiles stored in S3 |
-| `GET`  | `/profiles/{key}` | Fetch a single profile from S3 by key |
-| `DELETE` | `/profiles/{key}` | Delete a profile from S3 |
-| `GET`  | `/health` | Liveness probe |
-| `GET`  | `/docs` | Auto-generated OpenAPI docs (FastAPI) |
-
-#### Form fields (all optional, at least one required)
-
-| Field | Type | Description |
-|-------|------|-------------|
-| `csv_file` | file | Recruiter CSV |
-| `ats_file` | file | ATS JSON export |
-| `notes_file` | file | Recruiter notes `.txt` |
-| `resume_file` | file | Resume PDF |
-| `config_file` | file | Output config JSON |
-| `github_url` | string | GitHub profile URL |
-| `linkedin_url` | string | LinkedIn profile URL |
-| `notes_text` | string | Recruiter notes (pasted inline) |
-| `config_json` | string | Output config JSON (pasted inline) |
-
-#### Streaming batch example
-
-```bash
-curl -N -X POST http://localhost:8000/batch/stream \
-  -F "csv_file=@sample_data/multi_candidates.csv" \
-  | while read line; do
-      echo "$line" | python3 -c "import json,sys; d=json.load(sys.stdin); p=d['_progress']; print(f'[{p[\"i\"]}/{p[\"total\"]}] {d.get(\"full_name\")}  conf={d.get(\"overall_confidence\")}')"
-    done
+# then open http://localhost:8000
 ```
 
 ---
 
-## S3 Storage
+## Design & Reasoning
 
-Every pipeline run automatically uploads the result to S3:
+### Problem decomposition
 
-- **Single run**: `profiles/<candidate_id>_<name>.json`
-- **Batch run**: `profiles/batch_<timestamp>/<n>_<name>.json`
+The core challenge is that each source has a different:
+- **Format** (CSV, JSON, PDF, API, free text)
+- **Reliability** — GitHub bio is self-reported; an ATS system-of-record is higher trust
+- **Coverage** — no single source has all fields
 
-Upload is best-effort — if S3 is unreachable the API still returns the profile. Storage never blocks the pipeline.
+The design separates this into three stages:
 
-```bash
-# List all stored profiles
-curl http://localhost:8000/profiles
-
-# Fetch one
-curl http://localhost:8000/profiles/profiles/cand_abc123_Pria.json
-
-# Delete one
-curl -X DELETE http://localhost:8000/profiles/profiles/cand_abc123_Pria.json
 ```
+Sources → [Extractors] → RawExtraction[]
+                               ↓
+                          [Merger]  → CanonicalCandidate
+                               ↓
+                         [Projector] → final JSON
+```
+
+**Why three stages instead of one?**  
+Each stage has a single job. Extractors only parse. The merger only resolves conflicts. The projector only reshapes output. This means adding a new source (e.g. Glassdoor) touches exactly one file — you write one extractor. The merger and projector don't change.
 
 ---
 
-## Output Schema
+### Extractor layer — Strategy Pattern
 
-Every run produces a 13-field canonical record:
+Every extractor returns the same type (`RawExtraction`): a collection of `FieldValue` objects, each carrying a `value`, `source`, `method`, and `confidence`. The pipeline doesn't know or care whether data came from a CSV column or a GitHub API call — it just collects `RawExtraction` objects and passes them to the merger.
+
+This makes the system open for extension. Adding a new source is adding a new module in `app/extractors/`. Nothing else changes.
+
+**Per-source confidence baselines:**
+
+| Source | Confidence | Rationale |
+|--------|-----------|-----------|
+| GitHub API | 0.90 | Live API, developer self-maintains |
+| LinkedIn API | 0.88 | Live API, professional self-maintains |
+| Recruiter CSV | 0.85 | Structured, entered by recruiter |
+| ATS JSON | 0.80 | Structured but sometimes stale |
+| Resume PDF | 0.75 | Unstructured, extraction is lossy |
+| Recruiter Notes | 0.60 | Free text, inherently noisy |
+
+---
+
+### Merger — confidence-based conflict resolution
+
+**Why not a fixed priority ordering (GitHub > CSV > Notes)?**
+
+A fixed priority silently discards data. If GitHub says the name is "P. Nair" (0.90) and the ATS says "Priya Nair" (0.85), a priority system picks GitHub and throws away the fuller form. Confidence-based resolution picks the higher-confidence value *and* flags the conflict if the two sources are close (within 0.05), reducing `overall_confidence` by 0.05. No data is lost; the tension is surfaced.
+
+**Scalar fields** (name, headline, location, links): highest confidence wins. Conflict penalty applied when values differ and confidences are within 0.05 of each other.
+
+**Array fields** (emails, phones): union + deduplicate. Phones are normalised to E.164 *before* dedup — `"+91 98765 43210"`, `"9876543210"`, and `"+919876543210"` are the same number. Without normalisation, all three survive into the output.
+
+**Skills**: union across sources, confidence boosted using the complementary-probability formula:
+
+```
+confidence = 1 − ∏(1 − cᵢ)  for each source mentioning the skill
+```
+
+If CSV reports Python at 0.85 and GitHub repos show Python at 0.90, combined confidence is `1 − (0.15 × 0.10) = 0.985`. Each source is treated as an independent witness — agreement strengthens confidence rather than just taking the max.
+
+**Experience / Education**: deduplicated by `(company, title)` and `(institution, degree)` keys. The most-confident version of each entry wins. Entries are sorted newest-first.
+
+---
+
+### Provenance — every field is traceable
+
+Every accepted value writes a `ProvenanceEntry`:
+```json
+{ "field": "full_name", "source": "github_api", "method": "api", "confidence": 0.9 }
+```
+
+This satisfies the "deterministic & explainable" constraint directly. If a recruiter sees the wrong phone number in the output, they can read the provenance and know exactly which source file to fix.
+
+---
+
+### Determinism
+
+Same inputs always produce the same output:
+- `candidate_id` is `"cand_" + SHA256(name + emails)[:12]` — deterministic across runs, no UUID randomness
+- Dict and list operations preserve insertion order (Python 3.7+)
+- Skills are sorted by confidence descending before output
+- Experience and education are sorted by date descending
+- Phone and email dedup use ordered lists, not sets
+
+---
+
+### Projector — runtime output reshaping
+
+The same canonical record can be reshaped without code changes. This was the "required twist" in the assignment spec. Pass a `--config` JSON:
+
+```json
+{
+  "fields": [
+    { "path": "full_name",     "type": "string",   "required": true },
+    { "path": "primary_email", "from": "emails[0]","type": "string" },
+    { "path": "phone",         "from": "phones[0]","type": "string", "normalize": "E164" },
+    { "path": "skills",        "from": "skills[].name", "type": "string[]", "normalize": "canonical" }
+  ],
+  "include_confidence": true,
+  "include_provenance": false,
+  "on_missing": "null"
+}
+```
+
+Path syntax supports: simple keys, `emails[0]` (indexed), `skills[].name` (spread-pluck). The `on_missing` policy (`null` / `omit` / `error`) controls what happens when a required field has no value.
+
+---
+
+### Robustness
+
+A failing extractor is logged and skipped; the pipeline continues with whatever data it has. No extractor failure propagates to the caller as an unhandled exception. Missing or malformed sources produce `null` fields — they never produce invented values.
+
+Tested edge cases:
+- Empty call (no sources) → returns empty canonical record, `overall_confidence = 0.0`
+- Garbage CSV with no recognisable columns → extractor returns empty `RawExtraction`
+- Malformed ATS JSON → extractor exception caught, skipped
+- Phone with unrecognisable format → stored as-is (raw), not normalised, confidence 0.5
+- Single-row and multi-row CSV both handled; multi-row emits a warning and uses row 1 in single mode
+
+---
+
+### Scale
+
+The current pipeline processes one candidate per call, synchronously. Batch mode (`/batch`, CLI loops) sequences calls independently — no shared state between candidates, so parallelism is trivially addable.
+
+**Current throughput:** ~150–300 ms per candidate without live API calls (GitHub/LinkedIn add ~1–2 s). For 1000 candidates from CSV/ATS only, batch completes in ~3–5 minutes sequentially.
+
+**What would scale it to tens of thousands:** replace the sequential loop in `run_batch()` with a `ThreadPoolExecutor` (or `asyncio.gather` once the pipeline is made async). The architecture already supports this — each call is stateless. The FastAPI endpoint also blocks an async worker on each pipeline call; in production this would move to a background task queue (Celery, RQ).
+
+---
+
+## Output schema
 
 ```json
 {
@@ -335,7 +165,7 @@ Every run produces a 13-field canonical record:
   "location": { "city": "Chennai", "region": "TN", "country": "IN" },
   "links": {
     "linkedin": "https://linkedin.com/in/pria-nandhini",
-    "github":   "https://github.com/Prinan-99",
+    "github": "https://github.com/Prinan-99",
     "portfolio": null,
     "other": []
   },
@@ -357,63 +187,73 @@ Every run produces a 13-field canonical record:
 }
 ```
 
-Batch results include two additional fields: `_batch_label` (original row name) and `_progress` (`{i, total, name, elapsed_ms}`). Streaming results include `_s3_key` once uploaded.
-
 ---
 
-## Configurable Output (Required Twist)
-
-The same pipeline can produce different output shapes at runtime — no code changes needed. Pass a `--config` JSON:
-
-```json
-{
-  "fields": [
-    { "path": "full_name",     "type": "string",    "required": true },
-    { "path": "primary_email", "from": "emails[0]", "type": "string",   "required": true },
-    { "path": "phone",         "from": "phones[0]", "type": "string",   "normalize": "E164" },
-    { "path": "skills",        "from": "skills[].name", "type": "string[]", "normalize": "canonical" }
-  ],
-  "include_confidence": true,
-  "include_provenance": false,
-  "on_missing": "null"
-}
-```
-
-Supports: field selection, renaming, path remapping (`emails[0]`, `skills[].name`), per-field normalisation (`E164`, `canonical`, `ISO3166`), and `on_missing` policy (`null` / `omit` / `error`).
-
----
-
-## Confidence & Merging
-
-**Per-source confidence weights:**
-
-| Source | Confidence |
-|--------|------------|
-| GitHub API (profile) | 0.90 |
-| LinkedIn API | 0.88 |
-| Recruiter CSV | 0.85 |
-| ATS JSON | 0.80 |
-| Resume PDF | 0.75 |
-| Recruiter Notes | 0.60 |
-
-**Merge strategies by field type:**
-
-| Field type | Strategy |
-|------------|----------|
-| Scalar (name, headline, location) | Highest-confidence source wins. Two sources disagree within 0.05 → conflict flagged, `overall_confidence -= 0.05` |
-| Arrays (emails, phones) | Union + deduplicate. Phones normalised to E.164 before dedup |
-| Skills | Union across all sources. Same skill confirmed by multiple sources → confidence boosted: `1 − ∏(1 − cᵢ)` |
-| Experience / Education | Deduplicated by (company, title) / (institution, degree). Most-confident entry retained |
-
----
-
-## Demo
+## CLI
 
 ```bash
-bash demo.sh
+# All sources
+python3 canonicalize.py \
+  --csv sample_data/sample_recruiter.csv \
+  --ats sample_data/sample_ats.json \
+  --github https://github.com/Prinan-99 \
+  --notes sample_data/sample_notes.txt
+
+# Custom output shape
+python3 canonicalize.py \
+  --csv sample_data/sample_recruiter.csv \
+  --config config/sample_config.json
+
+# Save to file
+python3 canonicalize.py \
+  --csv sample_data/sample_recruiter.csv \
+  --github https://github.com/Prinan-99 \
+  --output candidate.json
 ```
 
-Interactive 3-step demo: single-candidate CLI → batch CLI → web UI. Each step shows a `◆ SAY THIS` block with talking points before running the command.
+| Flag | Description |
+|------|-------------|
+| `--csv PATH` | Recruiter CSV |
+| `--ats PATH` | ATS JSON export |
+| `--github URL` | GitHub profile URL |
+| `--linkedin URL` | LinkedIn URL (requires `PROXYCURL_API_KEY`) |
+| `--resume PATH` | Resume PDF |
+| `--notes PATH` | Recruiter notes `.txt` |
+| `--config PATH` | Output config JSON |
+| `--output / -o PATH` | Write to file (default: stdout) |
+| `--pretty / --compact` | Output format (default: pretty) |
+
+Optional env vars:
+```bash
+export GITHUB_TOKEN=ghp_...        # raises GitHub rate limit 60 → 5000 req/hr
+export PROXYCURL_API_KEY=pcp_...   # enables LinkedIn live fetch
+```
+
+---
+
+## Web UI
+
+```bash
+uvicorn app.server:app --port 8000
+```
+
+Open `http://localhost:8000`. Upload any combination of sources, run single or batch.
+
+**Batch mode** is triggered automatically:
+- Upload a CSV with more than one data row → "N candidates detected — Batch mode"
+- Select multiple PDF resumes at once (Ctrl/Cmd+click) → each PDF = one candidate
+- Mix CSV rows + multiple resumes → all processed together
+
+Results appear as a clickable pill row; select any candidate to see its full canonical view.
+
+API endpoints:
+
+| Method | Path | Description |
+|--------|------|-------------|
+| `GET` | `/` | Web UI |
+| `GET` | `/health` | Liveness probe |
+| `POST` | `/canonicalize` | Single candidate |
+| `POST` | `/batch` | Batch — returns `{count, results[]}` |
 
 ---
 
@@ -430,22 +270,18 @@ python3 -m pytest tests/ -v
 
 ---
 
-## Project Structure
+## Project structure
 
 ```
-├── canonicalize.py              # CLI entry point (single + batch, auto-detected)
-├── demo.sh                      # Interactive live demo runner
+├── canonicalize.py           # CLI entry point
 ├── requirements.txt
-├── .env                         # AWS credentials (not committed)
-│
 ├── app/
-│   ├── pipeline.py              # Orchestrator — calls extractors → merger → projector
-│   ├── merger.py                # Confidence-based conflict resolution
-│   ├── projector.py             # Config-driven output reshaping
-│   ├── schema.py                # Pydantic models (CanonicalCandidate, OutputConfig, …)
-│   ├── batch.py                 # Batch processor — run_batch(), run_batch_iter() generator
-│   ├── server.py                # FastAPI app — /canonicalize, /batch, /batch/stream, /profiles
-│   ├── storage.py               # S3 upload/list/fetch/delete via boto3
+│   ├── server.py             # FastAPI — GET / · POST /canonicalize · POST /batch
+│   ├── pipeline.py           # Orchestrator: detect → extract → merge → project
+│   ├── batch.py              # Batch processor — one pipeline call per candidate
+│   ├── merger.py             # Conflict resolution + confidence scoring
+│   ├── projector.py          # Config-driven output reshaping
+│   ├── schema.py             # Pydantic models (RawExtraction, CanonicalCandidate, OutputConfig)
 │   ├── extractors/
 │   │   ├── csv_extractor.py
 │   │   ├── ats_extractor.py
@@ -454,28 +290,33 @@ python3 -m pytest tests/ -v
 │   │   ├── resume_extractor.py
 │   │   └── notes_extractor.py
 │   └── normalizers/
-│       ├── phone.py             # → E.164
-│       ├── date.py              # → YYYY-MM
-│       ├── location.py          # → ISO 3166-1 alpha-2
-│       └── skills.py            # → canonical skill names
-│
-├── config/
-│   ├── default_config.json      # Full canonical output
-│   └── sample_config.json       # Custom projection example
-│
+│       ├── phone.py          # → E.164 (default region: IN)
+│       ├── date.py           # → YYYY-MM
+│       ├── location.py       # → ISO 3166-1 alpha-2
+│       └── skills.py         # → canonical skill names
 ├── front-end/
-│   └── index.html               # Single-file UI (vanilla JS, no build step)
-│
+│   └── index.html            # Single-file Web UI (no build step)
+├── config/
+│   ├── default_config.json
+│   └── sample_config.json
 ├── sample_data/
-│   ├── sample_recruiter.csv     # Single-candidate CSV
-│   ├── multi_candidates.csv     # 5-candidate CSV (triggers batch mode)
+│   ├── sample_recruiter.csv
 │   ├── sample_ats.json
 │   ├── sample_notes.txt
-│   ├── pria_output_default.json # Pre-generated output (default config)
-│   └── pria_output_custom.json  # Pre-generated output (custom config)
-│
+│   ├── multi_candidates.csv       # 5-row CSV for batch mode demo
+│   ├── pria_output_default.json   # Pre-generated output (default config)
+│   └── pria_output_custom.json    # Pre-generated output (custom config)
 └── tests/
     ├── test_normalizers.py
     ├── test_merger.py
     └── test_pipeline_e2e.py
 ```
+
+---
+
+## Known limitations
+
+- **LinkedIn**: live fetch requires a paid Proxycurl key. Without it, the extractor returns an empty extraction silently — the run continues with other sources.
+- **Resume PDF**: uses `pdfplumber`. Complex layouts and scanned PDFs produce degraded text extraction. Unrecognised fields become `null`, never invented.
+- **Batch throughput**: sequential today; trivially parallelisable with `ThreadPoolExecutor` since each call is stateless.
+- **Async pipeline**: `pipeline.run()` is sync and blocks the FastAPI event loop. Fine for demo; production would use a task queue.
