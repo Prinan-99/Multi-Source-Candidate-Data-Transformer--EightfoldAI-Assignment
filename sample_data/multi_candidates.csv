@@ -1,0 +1,6 @@
+name,email,phone,current_company,title,location,skills,headline
+Arjun Mehta,arjun@example.com,+919876543210,Google,ML Engineer,Bangalore India,"Python,TensorFlow,PyTorch,Docker,Kubernetes",ML Engineer at Google
+Priya Sharma,priya@example.com,+918765432109,Zoho,Full Stack Developer,Chennai India,"React,Node.js,PostgreSQL,TypeScript,AWS",Full Stack Developer at Zoho
+Rohit Verma,rohit@example.com,+917654321098,Infosys,Data Scientist,Hyderabad India,"Python,scikit-learn,Pandas,NLP,Machine Learning",Data Scientist at Infosys
+Ananya Iyer,ananya@example.com,+916543210987,Freshworks,Backend Developer,Chennai India,"Java,Spring Boot,PostgreSQL,Redis,Docker",Backend Developer at Freshworks
+Karthik Nair,karthik@example.com,,CRED,AI Engineer,Bangalore India,"Python,LLMs,FastAPI,RAG,Vector Embeddings",AI Engineer at CRED
