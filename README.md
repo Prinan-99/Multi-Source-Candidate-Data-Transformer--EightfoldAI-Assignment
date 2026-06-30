@@ -57,7 +57,7 @@ RawExtraction list
 │  Skills                                       │
 │    → union across all sources                 │
 │    → same skill in N sources → compound boost │
-│      conf = 1 − ∏(1 − cᵢ)                   │
+│      conf = 1 − ∏(1 − cᵢ)                     │ 
 │                                               │
 │  Experience / Education                       │
 │    → deduplicate by (company, title)          │
