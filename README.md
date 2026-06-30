@@ -1,7 +1,7 @@
 # Multi-Source Candidate Data Transformer
 **Eightfold Engineering Intern Assignment — Pria Nandhini M A**
 
-Takes candidate data from multiple sources — a recruiter spreadsheet, ATS export, GitHub profile, LinkedIn profile, resume PDF, and recruiter notes — and merges them into one clean canonical JSON profile with confidence scoring, conflict resolution, and provenance tracking on every field.
+Takes candidate data from multiple sources, a recruiter spreadsheet, ATS export, GitHub profile, LinkedIn profile, resume PDF, and recruiter notes — and merges them into one clean canonical JSON profile with confidence scoring, conflict resolution, and provenance tracking on every field.
 
 ---
 

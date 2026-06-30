@@ -1,0 +1,838 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Candidate Transformer</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: system-ui, -apple-system, sans-serif;
+      font-size: 13px;
+      background: #f4f4f4;
+      color: #1a1a1a;
+      height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+
+    /* header */
+    header {
+      background: #fff;
+      border-bottom: 1px solid #ddd;
+      padding: 12px 20px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      flex-shrink: 0;
+    }
+    header h1 { font-size: 14px; font-weight: 600; }
+    header span { font-size: 12px; color: #888; }
+
+    /* layout */
+    .workspace {
+      display: grid;
+      grid-template-columns: 340px 1fr;
+      flex: 1;
+      overflow: hidden;
+    }
+
+    /* left */
+    .left {
+      background: #fff;
+      border-right: 1px solid #ddd;
+      overflow-y: auto;
+      padding: 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .section-label {
+      font-size: 11px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.6px;
+      color: #888;
+      margin-bottom: 6px;
+    }
+
+    /* source block */
+    .source {
+      border: 1px solid #e0e0e0;
+      border-radius: 6px;
+      overflow: hidden;
+    }
+    .source-toggle {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 9px 12px;
+      cursor: pointer;
+      background: #fafafa;
+      user-select: none;
+    }
+    .source-toggle:hover { background: #f0f0f0; }
+    .source-left { display: flex; align-items: center; gap: 8px; }
+    .source-name { font-weight: 500; font-size: 13px; }
+    .conf-tag {
+      font-size: 10px;
+      color: #888;
+      background: #ececec;
+      padding: 1px 6px;
+      border-radius: 3px;
+    }
+    .source-dot {
+      width: 7px; height: 7px; border-radius: 50%;
+      background: #d0d0d0; flex-shrink: 0;
+    }
+    .source-dot.on { background: #16a34a; }
+    .chevron { font-size: 10px; color: #aaa; transition: transform .15s; }
+    .chevron.open { transform: rotate(180deg); }
+
+    .source-body {
+      padding: 10px 12px;
+      border-top: 1px solid #e0e0e0;
+      display: none;
+      flex-direction: column;
+      gap: 8px;
+    }
+    .source-body.open { display: flex; }
+
+    /* inputs */
+    label { font-size: 11px; color: #666; display: block; margin-bottom: 3px; }
+
+    input[type=text] {
+      width: 100%;
+      padding: 7px 10px;
+      border: 1px solid #d0d0d0;
+      border-radius: 5px;
+      font-size: 13px;
+      font-family: inherit;
+      outline: none;
+      background: #fff;
+    }
+    input[type=text]:focus { border-color: #2563eb; }
+
+    .file-input-wrap {
+      border: 1px dashed #ccc;
+      border-radius: 5px;
+      padding: 10px;
+      text-align: center;
+      cursor: pointer;
+      position: relative;
+      transition: border-color .15s;
+    }
+    .file-input-wrap:hover { border-color: #2563eb; }
+    .file-input-wrap input[type=file] {
+      position: absolute; inset: 0; opacity: 0; cursor: pointer;
+      width: 100%; height: 100%;
+    }
+    .file-hint { color: #888; font-size: 12px; }
+    .file-hint b { color: #2563eb; font-weight: 500; }
+    .file-name { font-size: 11px; color: #16a34a; margin-top: 3px; display: none; }
+
+    textarea {
+      width: 100%; padding: 7px 10px;
+      border: 1px solid #d0d0d0; border-radius: 5px;
+      font-size: 12px; font-family: monospace; resize: vertical;
+      min-height: 64px; outline: none; background: #fff;
+    }
+    textarea:focus { border-color: #2563eb; }
+
+    /* config toggle */
+    .tab-row { display: flex; gap: 0; border: 1px solid #d0d0d0; border-radius: 5px; overflow: hidden; }
+    .tab-btn {
+      flex: 1; padding: 6px 10px; border: none; background: #fafafa;
+      font-size: 12px; cursor: pointer; color: #555;
+    }
+    .tab-btn:first-child { border-right: 1px solid #d0d0d0; }
+    .tab-btn.active { background: #2563eb; color: #fff; font-weight: 500; }
+
+    /* submit */
+    #submit-btn {
+      width: 100%; padding: 10px;
+      background: #1a1a1a; color: #fff;
+      border: none; border-radius: 5px;
+      font-size: 13px; font-weight: 500;
+      cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 6px;
+    }
+    #submit-btn:hover { background: #333; }
+    #submit-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+
+    .spinner {
+      width: 13px; height: 13px;
+      border: 2px solid rgba(255,255,255,0.3);
+      border-top-color: #fff; border-radius: 50%;
+      animation: spin .6s linear infinite; display: none;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    .error-msg {
+      background: #fef2f2; border: 1px solid #fca5a5;
+      border-radius: 5px; padding: 8px 10px;
+      font-size: 12px; color: #b91c1c; display: none;
+    }
+
+    /* right */
+    .right {
+      overflow-y: auto;
+      padding: 20px;
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+    }
+
+    /* empty state */
+    .empty {
+      display: flex; flex-direction: column;
+      align-items: center; justify-content: center;
+      height: 100%; gap: 8px; color: #aaa;
+    }
+    .empty p:first-child { font-size: 28px; }
+    .empty p { font-size: 13px; }
+
+    /* result */
+    #result { display: none; flex-direction: column; gap: 14px; }
+
+    /* candidate name block */
+    .name-block {
+      background: #fff; border: 1px solid #e0e0e0;
+      border-radius: 6px; padding: 16px;
+      display: flex; justify-content: space-between; align-items: flex-start;
+    }
+    .cname { font-size: 20px; font-weight: 600; margin-bottom: 3px; }
+    .cheadline { font-size: 13px; color: #666; }
+    .cmeta { margin-top: 8px; display: flex; gap: 14px; flex-wrap: wrap; }
+    .cmeta span { font-size: 12px; color: #555; }
+    .conf-num { text-align: right; }
+    .conf-num .label { font-size: 10px; color: #888; text-transform: uppercase; letter-spacing: 0.5px; }
+    .conf-num .value { font-size: 26px; font-weight: 700; font-family: monospace; }
+    .conf-high { color: #16a34a; }
+    .conf-med  { color: #2563eb; }
+    .conf-low  { color: #d97706; }
+
+    /* card */
+    .card {
+      background: #fff; border: 1px solid #e0e0e0;
+      border-radius: 6px; overflow: hidden;
+    }
+    .card-head {
+      padding: 8px 14px; border-bottom: 1px solid #e0e0e0;
+      font-size: 11px; font-weight: 600; color: #666;
+      text-transform: uppercase; letter-spacing: 0.5px;
+    }
+    .card-body { padding: 12px 14px; }
+
+    /* sources used */
+    .tag-row { display: flex; flex-wrap: wrap; gap: 6px; }
+    .tag {
+      font-size: 11px; padding: 2px 8px; border-radius: 3px;
+      background: #eff6ff; color: #1d4ed8; border: 1px solid #bfdbfe;
+      font-family: monospace;
+    }
+
+    /* contact */
+    .contact-list { display: flex; flex-wrap: wrap; gap: 6px; }
+    .contact-item {
+      font-family: monospace; font-size: 12px;
+      background: #f4f4f4; padding: 4px 10px; border-radius: 4px;
+    }
+
+    /* skills */
+    .skills-wrap { display: flex; flex-wrap: wrap; gap: 6px; }
+    .skill {
+      font-size: 12px; padding: 3px 10px; border-radius: 3px;
+      background: #f4f4f4; border: 1px solid #e0e0e0;
+      display: flex; align-items: center; gap: 5px;
+    }
+    .skill .sconf {
+      font-family: monospace; font-size: 10px; color: #888;
+    }
+    .skill.hi { border-color: #bbf7d0; background: #f0fdf4; }
+    .skill.lo { border-color: #fde68a; background: #fffbeb; }
+
+    /* timeline */
+    .tl-item { display: flex; gap: 10px; margin-bottom: 10px; }
+    .tl-item:last-child { margin-bottom: 0; }
+    .tl-line { display: flex; flex-direction: column; align-items: center; }
+    .tl-circle {
+      width: 8px; height: 8px; border-radius: 50%;
+      background: #2563eb; flex-shrink: 0; margin-top: 4px;
+    }
+    .tl-bar { flex: 1; width: 1px; background: #e0e0e0; margin-top: 3px; }
+    .tl-item:last-child .tl-bar { display: none; }
+    .tl-body { flex: 1; padding-bottom: 4px; }
+    .tl-title { font-weight: 500; font-size: 13px; }
+    .tl-sub { font-size: 12px; color: #666; margin-top: 1px; }
+    .tl-date { font-size: 11px; color: #2563eb; font-family: monospace; margin-top: 2px; }
+
+    /* provenance table */
+    .prov-table { width: 100%; border-collapse: collapse; font-size: 12px; }
+    .prov-table th {
+      text-align: left; padding: 6px 10px;
+      border-bottom: 1px solid #e0e0e0;
+      font-size: 11px; font-weight: 600; color: #888;
+      text-transform: uppercase; letter-spacing: 0.4px;
+    }
+    .prov-table td { padding: 6px 10px; border-bottom: 1px solid #f0f0f0; }
+    .prov-table tr:last-child td { border-bottom: none; }
+    .prov-source {
+      font-family: monospace; font-size: 11px;
+      background: #f4f4f4; padding: 1px 6px; border-radius: 3px;
+    }
+    .prov-conf { font-family: monospace; }
+
+    /* raw json */
+    .json-toggle {
+      display: flex; justify-content: space-between; align-items: center;
+      padding: 8px 14px; cursor: pointer; user-select: none;
+    }
+    .json-toggle:hover { background: #fafafa; }
+    #raw-json { display: none; border-top: 1px solid #e0e0e0; padding: 12px 14px; }
+    #raw-json pre {
+      font-family: monospace; font-size: 11px;
+      white-space: pre-wrap; word-break: break-word;
+      max-height: 360px; overflow-y: auto; color: #333;
+    }
+    .copy-btn {
+      font-size: 11px; padding: 3px 10px;
+      border: 1px solid #d0d0d0; border-radius: 3px;
+      background: #fff; cursor: pointer; margin-bottom: 8px;
+    }
+    .copy-btn:hover { background: #f0f0f0; }
+
+    ::-webkit-scrollbar { width: 4px; }
+    ::-webkit-scrollbar-thumb { background: #ccc; border-radius: 2px; }
+  </style>
+</head>
+<body>
+
+<header>
+  <h1>Candidate Data Transformer</h1>
+  <span>Multi-source canonicalization — Eightfold Assignment</span>
+</header>
+
+<div class="workspace">
+
+  <!-- LEFT: sources form -->
+  <div class="left">
+    <div class="section-label">Input Sources</div>
+
+    <!-- CSV -->
+    <div class="source">
+      <div class="source-toggle" onclick="toggle(this, 'b-csv')">
+        <div class="source-left">
+          <div class="source-dot" id="dot-csv"></div>
+          <span class="source-name">Recruiter CSV</span>
+          <span class="conf-tag">0.85</span>
+        </div>
+        <span class="chevron">&#x25BE;</span>
+      </div>
+      <div class="source-body open" id="b-csv">
+        <div class="file-input-wrap" onclick="">
+          <input type="file" id="csv_file" accept=".csv" onchange="picked('csv_file','dot-csv','fn-csv')" />
+          <div class="file-hint">Drop CSV or <b>browse</b></div>
+          <div class="file-name" id="fn-csv"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ATS -->
+    <div class="source">
+      <div class="source-toggle" onclick="toggle(this, 'b-ats')">
+        <div class="source-left">
+          <div class="source-dot" id="dot-ats"></div>
+          <span class="source-name">ATS JSON</span>
+          <span class="conf-tag">0.80</span>
+        </div>
+        <span class="chevron">&#x25BE;</span>
+      </div>
+      <div class="source-body" id="b-ats">
+        <div class="file-input-wrap">
+          <input type="file" id="ats_file" accept=".json" onchange="picked('ats_file','dot-ats','fn-ats')" />
+          <div class="file-hint">Drop JSON or <b>browse</b></div>
+          <div class="file-name" id="fn-ats"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- GitHub -->
+    <div class="source">
+      <div class="source-toggle" onclick="toggle(this, 'b-gh')">
+        <div class="source-left">
+          <div class="source-dot" id="dot-gh"></div>
+          <span class="source-name">GitHub</span>
+          <span class="conf-tag">0.90</span>
+        </div>
+        <span class="chevron open">&#x25BE;</span>
+      </div>
+      <div class="source-body open" id="b-gh">
+        <label>Profile URL</label>
+        <input type="text" id="github_url" placeholder="https://github.com/username"
+               oninput="urlDot('github_url','dot-gh')" />
+      </div>
+    </div>
+
+    <!-- LinkedIn -->
+    <div class="source">
+      <div class="source-toggle" onclick="toggle(this, 'b-li')">
+        <div class="source-left">
+          <div class="source-dot" id="dot-li"></div>
+          <span class="source-name">LinkedIn</span>
+          <span class="conf-tag">0.88</span>
+        </div>
+        <span class="chevron">&#x25BE;</span>
+      </div>
+      <div class="source-body" id="b-li">
+        <label>Profile URL <span style="color:#aaa">(requires PROXYCURL_API_KEY)</span></label>
+        <input type="text" id="linkedin_url" placeholder="https://linkedin.com/in/username"
+               oninput="urlDot('linkedin_url','dot-li')" />
+      </div>
+    </div>
+
+    <!-- Resume -->
+    <div class="source">
+      <div class="source-toggle" onclick="toggle(this, 'b-res')">
+        <div class="source-left">
+          <div class="source-dot" id="dot-res"></div>
+          <span class="source-name">Resume PDF</span>
+          <span class="conf-tag">0.75</span>
+        </div>
+        <span class="chevron">&#x25BE;</span>
+      </div>
+      <div class="source-body" id="b-res">
+        <div class="file-input-wrap">
+          <input type="file" id="resume_file" accept=".pdf" onchange="picked('resume_file','dot-res','fn-res')" />
+          <div class="file-hint">Drop PDF or <b>browse</b></div>
+          <div class="file-name" id="fn-res"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Notes -->
+    <div class="source">
+      <div class="source-toggle" onclick="toggle(this, 'b-notes')">
+        <div class="source-left">
+          <div class="source-dot" id="dot-notes"></div>
+          <span class="source-name">Recruiter Notes</span>
+          <span class="conf-tag">0.60</span>
+        </div>
+        <span class="chevron">&#x25BE;</span>
+      </div>
+      <div class="source-body" id="b-notes">
+        <div class="file-input-wrap">
+          <input type="file" id="notes_file" accept=".txt" onchange="picked('notes_file','dot-notes','fn-notes')" />
+          <div class="file-hint">Drop .txt or <b>browse</b></div>
+          <div class="file-name" id="fn-notes"></div>
+        </div>
+        <label style="margin-top:2px">Or paste directly</label>
+        <textarea id="notes_text" placeholder="Candidate: Jane Doe&#10;Notes: ..."
+                  oninput="urlDot('notes_text','dot-notes')"></textarea>
+      </div>
+    </div>
+
+    <!-- Output config -->
+    <div>
+      <div class="section-label">Output Config</div>
+      <div class="tab-row">
+        <button class="tab-btn active" id="tab-default" onclick="setCfg('default')">Default</button>
+        <button class="tab-btn" id="tab-custom" onclick="setCfg('custom')">Custom</button>
+      </div>
+      <div id="cfg-area" style="display:none;margin-top:8px;display:none;flex-direction:column;gap:8px">
+        <div class="file-input-wrap">
+          <input type="file" id="config_file" accept=".json" onchange="picked('config_file',null,'fn-cfg')" />
+          <div class="file-hint">Drop config JSON or <b>browse</b></div>
+          <div class="file-name" id="fn-cfg"></div>
+        </div>
+        <label>Or paste config JSON</label>
+        <textarea id="config_json" style="min-height:72px"
+          placeholder='{"fields":[{"path":"full_name","type":"string"}]}'></textarea>
+      </div>
+    </div>
+
+    <div class="error-msg" id="err"></div>
+
+    <button id="submit-btn" onclick="run()">
+      <div class="spinner" id="spin"></div>
+      <span id="btn-label">Run pipeline</span>
+    </button>
+  </div>
+
+  <!-- RIGHT: output -->
+  <div class="right">
+
+    <div class="empty" id="empty">
+      <p>&#x25B7;</p>
+      <p>Add at least one source and run the pipeline.</p>
+    </div>
+
+    <div id="result">
+
+      <!-- Name / headline / confidence -->
+      <div class="name-block">
+        <div>
+          <div class="cname" id="r-name"></div>
+          <div class="cheadline" id="r-headline"></div>
+          <div class="cmeta" id="r-meta"></div>
+        </div>
+        <div class="conf-num">
+          <div class="label">Confidence</div>
+          <div class="value" id="r-conf"></div>
+        </div>
+      </div>
+
+      <!-- Sources used -->
+      <div class="card" id="s-sources">
+        <div class="card-head">Sources used</div>
+        <div class="card-body">
+          <div class="tag-row" id="r-sources"></div>
+        </div>
+      </div>
+
+      <!-- Contact -->
+      <div class="card" id="s-contact">
+        <div class="card-head">Contact</div>
+        <div class="card-body" style="display:flex;flex-direction:column;gap:8px">
+          <div class="contact-list" id="r-emails"></div>
+          <div class="contact-list" id="r-phones"></div>
+        </div>
+      </div>
+
+      <!-- Location -->
+      <div class="card" id="s-location">
+        <div class="card-head">Location</div>
+        <div class="card-body" id="r-location"></div>
+      </div>
+
+      <!-- Links -->
+      <div class="card" id="s-links">
+        <div class="card-head">Links</div>
+        <div class="card-body">
+          <div class="tag-row" id="r-links"></div>
+        </div>
+      </div>
+
+      <!-- Skills -->
+      <div class="card" id="s-skills">
+        <div class="card-head">Skills</div>
+        <div class="card-body">
+          <div class="skills-wrap" id="r-skills"></div>
+        </div>
+      </div>
+
+      <!-- Experience -->
+      <div class="card" id="s-exp">
+        <div class="card-head">Experience</div>
+        <div class="card-body">
+          <div id="r-exp"></div>
+        </div>
+      </div>
+
+      <!-- Education -->
+      <div class="card" id="s-edu">
+        <div class="card-head">Education</div>
+        <div class="card-body">
+          <div id="r-edu"></div>
+        </div>
+      </div>
+
+      <!-- Provenance -->
+      <div class="card" id="s-prov">
+        <div class="card-head">Provenance</div>
+        <div class="card-body" style="padding:0;overflow-x:auto">
+          <table class="prov-table">
+            <thead><tr><th>Field</th><th>Source</th><th>Method</th><th>Conf</th></tr></thead>
+            <tbody id="r-prov"></tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- Raw JSON -->
+      <div class="card">
+        <div class="json-toggle" onclick="toggleJson()" role="button" aria-expanded="false" id="jtoggle">
+          <span style="font-size:11px;font-weight:600;color:#888;text-transform:uppercase;letter-spacing:.5px">Raw JSON</span>
+          <span style="font-size:11px;color:#aaa" id="jchev">&#x25BE;</span>
+        </div>
+        <div id="raw-json">
+          <button class="copy-btn" onclick="copyJson()">Copy</button>
+          <pre id="json-pre"></pre>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+</div>
+
+<script>
+  // ── Accordion ────────────────────────────────────────────────────────────
+  function toggle(hdr, bodyId) {
+    const body = document.getElementById(bodyId);
+    const chev = hdr.querySelector('.chevron');
+    const open = body.classList.contains('open');
+    body.classList.toggle('open', !open);
+    body.style.display = open ? 'none' : 'flex';
+    chev.classList.toggle('open', !open);
+  }
+
+  // init: close bodies that don't have .open class
+  document.querySelectorAll('.source-body').forEach(b => {
+    if (!b.classList.contains('open')) b.style.display = 'none';
+  });
+
+  // ── File picked ──────────────────────────────────────────────────────────
+  function picked(inputId, dotId, nameId) {
+    const f = document.getElementById(inputId).files[0];
+    if (!f) return;
+    const nm = document.getElementById(nameId);
+    nm.textContent = f.name;
+    nm.style.display = 'block';
+    if (dotId) document.getElementById(dotId).classList.add('on');
+  }
+
+  function urlDot(inputId, dotId) {
+    const val = document.getElementById(inputId).value.trim();
+    document.getElementById(dotId).classList.toggle('on', val.length > 0);
+  }
+
+  // ── Config tabs ──────────────────────────────────────────────────────────
+  function setCfg(mode) {
+    document.getElementById('tab-default').classList.toggle('active', mode === 'default');
+    document.getElementById('tab-custom').classList.toggle('active',  mode === 'custom');
+    const area = document.getElementById('cfg-area');
+    area.style.display = mode === 'custom' ? 'flex' : 'none';
+  }
+
+  // ── Run ──────────────────────────────────────────────────────────────────
+  async function run() {
+    const btn  = document.getElementById('submit-btn');
+    const spin = document.getElementById('spin');
+    const lbl  = document.getElementById('btn-label');
+    const err  = document.getElementById('err');
+
+    err.style.display = 'none';
+    btn.disabled = true;
+    spin.style.display = 'block';
+    lbl.textContent = 'Running…';
+
+    const form = new FormData();
+    const f = id => document.getElementById(id);
+
+    if (f('csv_file').files[0])    form.append('csv_file',    f('csv_file').files[0]);
+    if (f('ats_file').files[0])    form.append('ats_file',    f('ats_file').files[0]);
+    if (f('notes_file').files[0])  form.append('notes_file',  f('notes_file').files[0]);
+    if (f('resume_file').files[0]) form.append('resume_file', f('resume_file').files[0]);
+    if (f('config_file').files[0]) form.append('config_file', f('config_file').files[0]);
+
+    const gh = f('github_url').value.trim();
+    const li = f('linkedin_url').value.trim();
+    const nt = f('notes_text').value.trim();
+    const cj = f('config_json').value.trim();
+
+    if (gh) form.append('github_url',   gh);
+    if (li) form.append('linkedin_url', li);
+    if (!f('notes_file').files[0] && nt) form.append('notes_text', nt);
+    if (!f('config_file').files[0] && cj) form.append('config_json', cj);
+
+    const hasAnything = f('csv_file').files[0] || f('ats_file').files[0] ||
+      f('notes_file').files[0] || f('resume_file').files[0] || gh || li || nt;
+
+    if (!hasAnything) {
+      showErr('Add at least one input source.');
+      reset(); return;
+    }
+
+    try {
+      const res = await fetch('/canonicalize', { method: 'POST', body: form });
+      if (!res.ok) {
+        const j = await res.json().catch(() => ({}));
+        throw new Error(j.detail || 'Server error ' + res.status);
+      }
+      render(await res.json());
+    } catch (e) { showErr(e.message); }
+    finally { reset(); }
+  }
+
+  function reset() {
+    document.getElementById('submit-btn').disabled = false;
+    document.getElementById('spin').style.display = 'none';
+    document.getElementById('btn-label').textContent = 'Run pipeline';
+  }
+  function showErr(msg) {
+    const e = document.getElementById('err');
+    e.textContent = msg; e.style.display = 'block';
+  }
+
+  // ── Render ───────────────────────────────────────────────────────────────
+  function render(d) {
+    // Hide all optional sections first so stale data from a previous run doesn't bleed through
+    ['s-sources','s-contact','s-location','s-links','s-skills','s-exp','s-edu','s-prov'].forEach(id => {
+      document.getElementById(id).style.display = 'none';
+    });
+
+    document.getElementById('empty').style.display  = 'none';
+    document.getElementById('result').style.display = 'flex';
+
+    // name / headline
+    document.getElementById('r-name').textContent     = d.full_name || '—';
+    document.getElementById('r-headline').textContent = d.headline  || '';
+
+    // confidence — custom config output may not include this
+    const conf = d.overall_confidence ?? null;
+    const cv = document.getElementById('r-conf');
+    if (conf !== null) {
+      cv.textContent = conf.toFixed(2);
+      cv.className = 'value ' + (conf >= .85 ? 'conf-high' : conf >= .70 ? 'conf-med' : 'conf-low');
+    } else {
+      cv.textContent = '—';
+      cv.className = 'value';
+    }
+
+    // meta chips (years exp + location city)
+    const meta = document.getElementById('r-meta');
+    meta.innerHTML = '';
+    if (d.years_experience) meta.innerHTML += `<span>${d.years_experience.toFixed(1)} yrs exp</span>`;
+    const loc = (d.location && typeof d.location === 'object') ? d.location : {};
+    if (loc.city)    meta.innerHTML += `<span>${x(loc.city)}</span>`;
+    if (loc.country) meta.innerHTML += `<span>${x(loc.country)}</span>`;
+
+    // sources used — derived from provenance
+    const srcEl = document.getElementById('r-sources');
+    srcEl.innerHTML = '';
+    [...new Set((d.provenance||[]).map(p=>p.source).filter(Boolean))].forEach(s => {
+      srcEl.innerHTML += `<span class="tag">${x(s)}</span>`;
+    });
+    vis('s-sources', srcEl.innerHTML !== '');
+
+    // emails / phones
+    // Default schema: d.emails[], d.phones[]
+    // Custom schema may use d.primary_email (string) and d.phone (string)
+    const emails = Array.isArray(d.emails) ? d.emails
+                 : d.primary_email ? [d.primary_email] : [];
+    const phones = Array.isArray(d.phones) ? d.phones
+                 : d.phone ? [d.phone] : [];
+    document.getElementById('r-emails').innerHTML =
+      emails.map(e => `<span class="contact-item">${x(e)}</span>`).join('');
+    document.getElementById('r-phones').innerHTML =
+      phones.map(p => `<span class="contact-item">${x(p)}</span>`).join('');
+    vis('s-contact', emails.length + phones.length > 0);
+
+    // location — only show when we have a real location object with city/country
+    const locEl = document.getElementById('r-location');
+    const locText = [loc.city, loc.region, loc.country].filter(Boolean).join(', ');
+    locEl.textContent = locText || '—';
+    vis('s-location', !!locText);
+
+    // links
+    const lk = d.links || {};
+    const lkEl = document.getElementById('r-links');
+    lkEl.innerHTML = '';
+    if (lk.github)    lkEl.innerHTML += `<a href="${lk.github}" target="_blank" rel="noopener" class="tag" style="text-decoration:none">GitHub</a>`;
+    if (lk.linkedin)  lkEl.innerHTML += `<a href="${lk.linkedin}" target="_blank" rel="noopener" class="tag" style="text-decoration:none">LinkedIn</a>`;
+    if (lk.portfolio) lkEl.innerHTML += `<a href="${lk.portfolio}" target="_blank" rel="noopener" class="tag" style="text-decoration:none">Portfolio</a>`;
+    vis('s-links', lkEl.innerHTML !== '');
+
+    // skills
+    // Default schema: [{name, confidence}]  Custom schema: ["Python", "Java"]
+    const skills = d.skills || [];
+    const skEl = document.getElementById('r-skills');
+    if (skills.length === 0) {
+      skEl.innerHTML = '';
+    } else if (typeof skills[0] === 'string') {
+      // flat string list from custom config — no confidence available
+      skEl.innerHTML = skills.map(s => `<span class="skill">${x(s)}</span>`).join('');
+    } else {
+      // full objects from default schema
+      skEl.innerHTML = [...skills].sort((a,b)=>(b.confidence||0)-(a.confidence||0)).map(s => {
+        const c = s.confidence || 0;
+        const cls = c >= .85 ? 'hi' : c < .70 ? 'lo' : '';
+        return `<span class="skill ${cls}">${x(s.name||'')}<span class="sconf">${c.toFixed(2)}</span></span>`;
+      }).join('');
+    }
+    vis('s-skills', skills.length > 0);
+
+    // experience
+    const expEl = document.getElementById('r-exp');
+    expEl.innerHTML = (d.experience||[]).map(e => {
+      const range = [e.start, e.end].filter(Boolean).join(' – ');
+      return `<div class="tl-item">
+        <div class="tl-line"><div class="tl-circle"></div><div class="tl-bar"></div></div>
+        <div class="tl-body">
+          <div class="tl-title">${x(e.title||'')} at ${x(e.company||'')}</div>
+          ${range ? `<div class="tl-date">${x(range)}</div>` : ''}
+          ${e.summary ? `<div class="tl-sub">${x(e.summary)}</div>` : ''}
+        </div>
+      </div>`;
+    }).join('');
+    vis('s-exp', (d.experience||[]).length > 0);
+
+    // education
+    const eduEl = document.getElementById('r-edu');
+    eduEl.innerHTML = (d.education||[]).map(e => {
+      const deg = [e.degree, e.field].filter(Boolean).join(' in ');
+      return `<div class="tl-item">
+        <div class="tl-line"><div class="tl-circle" style="background:#16a34a"></div><div class="tl-bar"></div></div>
+        <div class="tl-body">
+          <div class="tl-title">${x(e.institution||'')}</div>
+          ${deg ? `<div class="tl-sub">${x(deg)}</div>` : ''}
+          ${e.end_year ? `<div class="tl-date">Graduated ${e.end_year}</div>` : ''}
+        </div>
+      </div>`;
+    }).join('');
+    vis('s-edu', (d.education||[]).length > 0);
+
+    // provenance
+    const pvEl = document.getElementById('r-prov');
+    pvEl.innerHTML = (d.provenance||[]).map(p => `
+      <tr>
+        <td style="font-family:monospace;font-size:11px">${x(p.field||'')}</td>
+        <td><span class="prov-source">${x(p.source||'')}</span></td>
+        <td style="color:#666">${x(p.method||'')}</td>
+        <td class="prov-conf">${(p.confidence||0).toFixed(2)}</td>
+      </tr>`).join('');
+    vis('s-prov', (d.provenance||[]).length > 0);
+
+    // raw json
+    document.getElementById('json-pre').textContent = JSON.stringify(d, null, 2);
+
+    document.querySelector('.right').scrollTo({ top: 0, behavior: 'smooth' });
+  }
+
+  // ── Helpers ──────────────────────────────────────────────────────────────
+  function x(s) {
+    return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+  }
+  function vis(id, show) {
+    document.getElementById(id).style.display = show ? '' : 'none';
+  }
+
+  function toggleJson() {
+    const raw  = document.getElementById('raw-json');
+    const open = raw.style.display !== 'none';
+    raw.style.display = open ? 'none' : 'block';
+    document.getElementById('jchev').style.transform = open ? '' : 'rotate(180deg)';
+    document.getElementById('jtoggle').setAttribute('aria-expanded', String(!open));
+  }
+
+  function copyJson() {
+    navigator.clipboard.writeText(document.getElementById('json-pre').textContent).then(() => {
+      const b = document.querySelector('.copy-btn');
+      b.textContent = 'Copied';
+      setTimeout(() => b.textContent = 'Copy', 1500);
+    });
+  }
+
+  // hide result sections initially
+  document.querySelectorAll('[id^="s-"]').forEach(el => el.style.display = 'none');
+  document.getElementById('result').style.display = 'none';
+
+  // keyboard shortcut
+  document.addEventListener('keydown', e => {
+    if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') run();
+  });
+</script>
+
+</body>
+</html>
