@@ -83,6 +83,116 @@ def count_candidates(csv_path: str | None, ats_json_path: str | None) -> int:
     return total
 
 
+def _build_candidates(csv_path: str | None, ats_json_path: str | None) -> list[dict]:
+    """Shared helper: build the ordered list of per-candidate input dicts."""
+    candidates: list[dict] = []
+
+    if csv_path:
+        rows = _csv_rows(csv_path)
+        if rows:
+            fieldnames = list(rows[0].keys())
+            for row in rows:
+                name = (
+                    row.get("name") or row.get("full_name") or
+                    row.get("candidate_name") or f"row-{len(candidates)+1}"
+                ).strip()
+                candidates.append({
+                    "label": name,
+                    "csv_text": _row_to_csv_text(fieldnames, row),
+                    "ats_text": None,
+                })
+
+    if ats_json_path:
+        records = _load_ats_records(ats_json_path)
+        if records:
+            for rec in records:
+                name = (
+                    rec.get("candidate_name") or rec.get("name") or
+                    rec.get("full_name") or f"record-{len(candidates)+1}"
+                )
+                idx = len([c for c in candidates if c.get("ats_text") is None
+                           and c.get("csv_text") is not None])
+                if csv_path and idx <= len(candidates) - 1:
+                    candidates[len(candidates) - idx - 1]["ats_text"] = _ats_record_to_text(rec)
+                else:
+                    candidates.append({
+                        "label": str(name),
+                        "csv_text": None,
+                        "ats_text": _ats_record_to_text(rec),
+                    })
+
+    return candidates
+
+
+def run_batch_iter(
+    csv_path: str | None = None,
+    ats_json_path: str | None = None,
+    github_url: str | None = None,
+    resume_path: str | None = None,
+    notes_path: str | None = None,
+    linkedin_url: str | None = None,
+    output_config_path: str | None = None,
+) -> Any:
+    """
+    Generator version of run_batch.
+    Yields one result dict per candidate the moment it is ready.
+    Each dict has an added '_progress' key: {i, total, elapsed_ms, name}.
+    """
+    candidates = _build_candidates(csv_path, ats_json_path)
+    total = len(candidates)
+
+    if not candidates:
+        return
+
+    for i, cand in enumerate(candidates, 1):
+        t0 = time.perf_counter()
+        tmp_csv = tmp_ats = None
+
+        try:
+            if cand.get("csv_text"):
+                tmp_csv = _write_tmp(cand["csv_text"], ".csv")
+            if cand.get("ats_text"):
+                tmp_ats = _write_tmp(cand["ats_text"], ".json")
+
+            _sink = io.StringIO()
+            with contextlib.redirect_stdout(_sink):
+                result = pipeline_run(
+                    csv_path=tmp_csv,
+                    github_url=github_url,
+                    resume_path=resume_path,
+                    ats_json_path=tmp_ats,
+                    notes_path=notes_path,
+                    linkedin_url=linkedin_url,
+                    output_config_path=output_config_path,
+                    candidate_id=None,
+                )
+
+            elapsed_ms = (time.perf_counter() - t0) * 1000
+            name = result.get("full_name") or cand["label"]
+            result["_batch_label"] = cand["label"]
+            result["_progress"] = {"i": i, "total": total,
+                                   "name": name, "elapsed_ms": round(elapsed_ms)}
+
+        except Exception as exc:
+            elapsed_ms = (time.perf_counter() - t0) * 1000
+            result = {
+                "_batch_label": cand["label"],
+                "_error": str(exc),
+                "_progress": {"i": i, "total": total,
+                              "name": cand["label"], "elapsed_ms": round(elapsed_ms)},
+            }
+
+        finally:
+            for p in [tmp_csv, tmp_ats]:
+                if p:
+                    try:
+                        os.unlink(p)
+                    except OSError:
+                        pass
+
+        yield result
+
+
 def run_batch(
     csv_path: str | None = None,
     ats_json_path: str | None = None,
@@ -101,48 +211,7 @@ def run_batch(
     Prints a live progress line for each candidate.
     """
 
-    # ── Figure out candidate list ─────────────────────────────────────────
-    candidates: list[dict] = []   # each dict: {csv_text?, ats_text?, label}
-
-    if csv_path:
-        rows = _csv_rows(csv_path)
-        if not rows:
-            print(f"[batch] CSV has no data rows: {csv_path}")
-        else:
-            fieldnames = list(rows[0].keys())
-            for row in rows:
-                name = (
-                    row.get("name") or row.get("full_name") or
-                    row.get("candidate_name") or f"row-{len(candidates)+1}"
-                ).strip()
-                candidates.append({
-                    "label": name,
-                    "csv_text": _row_to_csv_text(fieldnames, row),
-                    "ats_text": None,
-                })
-
-    if ats_json_path:
-        records = _load_ats_records(ats_json_path)
-        if not records:
-            print(f"[batch] ATS JSON has no records: {ats_json_path}")
-        else:
-            for rec in records:
-                name = (
-                    rec.get("candidate_name") or rec.get("name") or
-                    rec.get("full_name") or f"record-{len(candidates)+1}"
-                )
-                # If we already have CSV candidates, attach ATS record by index
-                idx = len([c for c in candidates if c.get("ats_text") is None
-                           and c.get("csv_text") is not None])
-                if csv_path and idx <= len(candidates) - 1:
-                    candidates[len(candidates) - idx - 1]["ats_text"] = _ats_record_to_text(rec)
-                else:
-                    candidates.append({
-                        "label": str(name),
-                        "csv_text": None,
-                        "ats_text": _ats_record_to_text(rec),
-                    })
-
+    candidates = _build_candidates(csv_path, ats_json_path)
     if not candidates:
         print("[batch] No candidates found. Provide a --csv or --ats with data.")
         return []

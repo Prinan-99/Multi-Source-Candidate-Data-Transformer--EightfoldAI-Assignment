@@ -166,6 +166,9 @@ def main(
             click.echo(_line())
             click.echo(f"  {n} candidates detected\n")
 
+        # Print per-candidate JSON only when no output destination is set
+        _print_json = not quiet and not output_path and not output_dir
+
         results = run_batch(
             csv_path=csv_path,
             ats_json_path=ats_json_path,
@@ -176,7 +179,7 @@ def main(
             output_config_path=config_path,
             output_dir=output_dir,
             pretty=pretty,
-            print_json=not quiet,
+            print_json=_print_json,
         )
 
         if output_path:
@@ -227,15 +230,15 @@ def main(
 
     if output_path:
         Path(output_path).write_text(json_str, encoding="utf-8")
-    else:
-        if quiet:
-            click.echo(json_str)
 
-    if not quiet:
-        _print_summary(result, output_path, elapsed)
-        # Always print JSON below the summary for single-candidate mode too
-        click.echo()
+    if quiet:
         click.echo(json_str)
+    else:
+        _print_summary(result, output_path, elapsed)
+        # Print JSON to stdout only when not saving to a file
+        if not output_path:
+            click.echo()
+            click.echo(json_str)
 
 
 if __name__ == "__main__":
